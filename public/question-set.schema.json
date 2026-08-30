@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/question-set.schema.json",
+  "title": "自分史 公開用設問セット",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "questionSetId", "version", "title", "sections"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "questionSetId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "sections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/section" }
+    }
+  },
+  "$defs": {
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "kind", "description", "order", "enabled", "questions"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "kind": { "enum": ["era", "theme", "personality"] },
+        "description": { "type": "string", "maxLength": 240 },
+        "order": { "type": "number" },
+        "enabled": { "type": "boolean" },
+        "questions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/question" }
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "helpText", "answerType", "required", "order", "tags", "enabled"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "helpText": { "type": "string", "maxLength": 300 },
+        "answerType": {
+          "enum": ["single_choice", "multiple_choice", "short_text", "long_text", "year_month", "rating"]
+        },
+        "required": { "type": "boolean" },
+        "order": { "type": "number" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 40 },
+          "uniqueItems": true
+        },
+        "enabled": { "type": "boolean" },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 100 }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answerType": { "enum": ["single_choice", "multiple_choice"] }
+            },
+            "required": ["answerType"]
+          },
+          "then": { "required": ["options"] }
+        }
+      ]
+    }
+  }
+}
