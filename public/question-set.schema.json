@@ -42,7 +42,7 @@
         "text": { "type": "string", "minLength": 1, "maxLength": 120 },
         "helpText": { "type": "string", "maxLength": 300 },
         "answerType": {
-          "enum": ["single_choice", "multiple_choice", "short_text", "long_text", "year_month", "rating"]
+          "enum": ["single_choice", "multiple_choice", "short_text", "long_text", "date", "year_month", "rating"]
         },
         "required": { "type": "boolean" },
         "order": { "type": "number" },

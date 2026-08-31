@@ -2,62 +2,28 @@
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 
-type AnswerType =
-  | 'single_choice'
-  | 'multiple_choice'
-  | 'short_text'
-  | 'long_text'
-  | 'year_month'
-  | 'rating';
-type ReviewStatus = 'unreviewed' | 'reviewed' | 'needs_revision';
-type SectionKind = 'era' | 'theme' | 'personality';
-
-type Question = {
-  id: string;
-  text: string;
-  helpText: string;
-  answerType: AnswerType;
-  required: boolean;
-  order: number;
-  tags: string[];
-  enabled: boolean;
-  source: 'ai' | 'manual';
-  reviewStatus: ReviewStatus;
-  options?: string[];
-  intent?: string;
-  aiOriginalText?: string;
-  reviewMemo?: string;
-};
-
-type Section = {
-  id: string;
-  title: string;
-  description: string;
-  kind: SectionKind;
-  order: number;
-  enabled: boolean;
-  questions: Question[];
-};
-
-type QuestionSet = {
-  schemaVersion: number;
-  questionSetId: string;
-  version: string;
-  title: string;
-  updatedAt: string;
-  sections: Section[];
-};
+import {
+  initialQuestionSet,
+  type AnswerType,
+  type Question,
+  type QuestionSet,
+  type ReviewStatus,
+  type Section,
+  type SectionKind,
+} from '@/lib/initial-question-set';
 
 type Notice = { tone: 'success' | 'warning' | 'neutral'; message: string } | null;
 
 const STORAGE_KEY = 'jibunshi-question-editor-v1';
 const BACKUP_KEY = 'jibunshi-question-editor-import-backup-v1';
+const MIGRATION_BACKUP_KEY = 'jibunshi-question-editor-before-v2';
 
 const ANSWER_LABELS: Record<AnswerType, string> = {
   single_choice: '単一選択',
   multiple_choice: '複数選択',
   short_text: '短い文章',
   long_text: '長い文章・音声',
+  date: '年月日',
   year_month: '年または年月',
   rating: '評価段階',
 };
@@ -68,7 +34,7 @@ const STATUS_LABELS: Record<ReviewStatus, string> = {
   needs_revision: '要修正',
 };
 
-const initialQuestionSet: QuestionSet = {
+const legacyInitialQuestionSet: QuestionSet = {
   schemaVersion: 1,
   questionSetId: 'standard-life-story',
   version: '1.0.0',
@@ -318,7 +284,7 @@ function issuesForQuestion(question: Question, section: Section) {
   }
   if (question.text.length > 80) warnings.push('設問文が長いため、利用者画面で読みにくい可能性があります。');
   if (/(普通は|当然|必ず)/.test(question.text)) warnings.push('回答を誘導する表現が含まれている可能性があります。');
-  if (/[病気|病歴|宗教|信条]/.test(question.text)) warnings.push('慎重な扱いが必要な内容が含まれています。');
+  if (/(病気|病歴|宗教|信条)/.test(question.text)) warnings.push('慎重な扱いが必要な内容が含まれています。');
   if (question.required) warnings.push('必須回答にする必要があるか確認してください。');
   const duplicates = section.questions.filter(
     (candidate) => candidate.id !== question.id && candidate.text.trim() === question.text.trim(),
@@ -423,8 +389,8 @@ function normalizeImportedData(value: unknown): QuestionSet | null {
 
 export default function Home() {
   const [questionSet, setQuestionSet] = useState<QuestionSet>(initialQuestionSet);
-  const [selectedSectionId, setSelectedSectionId] = useState('childhood');
-  const [selectedQuestionId, setSelectedQuestionId] = useState('childhood-home');
+  const [selectedSectionId, setSelectedSectionId] = useState('profile');
+  const [selectedQuestionId, setSelectedQuestionId] = useState('profile-name');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ReviewStatus | 'disabled'>('all');
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
@@ -448,7 +414,22 @@ export default function Home() {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
           const normalized = normalizeImportedData(JSON.parse(stored));
-          if (normalized) setQuestionSet(normalized);
+          if (
+            normalized
+            && normalized.questionSetId === initialQuestionSet.questionSetId
+            && normalized.version === legacyInitialQuestionSet.version
+          ) {
+            localStorage.setItem(MIGRATION_BACKUP_KEY, JSON.stringify(normalized));
+            setQuestionSet(initialQuestionSet);
+            setSelectedSectionId('profile');
+            setSelectedQuestionId('profile-name');
+            setNotice({
+              tone: 'success',
+              message: '人生史の標準設問を45問へ更新しました。以前の下書きはブラウザ内にバックアップしています。',
+            });
+          } else if (normalized) {
+            setQuestionSet(normalized);
+          }
         }
       } catch {
         setNotice({ tone: 'warning', message: '保存データを読み込めなかったため、初期データを表示しています。' });
@@ -737,6 +718,7 @@ export default function Home() {
         </div>
       );
     }
+    if (question.answerType === 'date') return <input className="preview-text-input" type="date" />;
     if (question.answerType === 'year_month') return <input className="preview-text-input" type="month" />;
     if (question.answerType === 'rating') {
       return <div className="rating-row">{[1, 2, 3, 4, 5].map((number) => <button key={number}>{number}</button>)}</div>;
