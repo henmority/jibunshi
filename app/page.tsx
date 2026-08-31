@@ -16,7 +16,7 @@ type Notice = { tone: 'success' | 'warning' | 'neutral'; message: string } | nul
 
 const STORAGE_KEY = 'jibunshi-question-editor-v1';
 const BACKUP_KEY = 'jibunshi-question-editor-import-backup-v1';
-const MIGRATION_BACKUP_KEY = 'jibunshi-question-editor-before-v2';
+const MIGRATION_BACKUP_KEY = 'jibunshi-question-editor-before-v3';
 
 const ANSWER_LABELS: Record<AnswerType, string> = {
   single_choice: '単一選択',
@@ -260,6 +260,8 @@ const legacyInitialQuestionSet: QuestionSet = {
   ],
 };
 
+const STANDARD_MIGRATION_VERSIONS = [legacyInitialQuestionSet.version, '2.0.0'];
+
 function slugPart(value: string) {
   return value
     .toLowerCase()
@@ -418,7 +420,7 @@ export default function Home() {
           if (
             normalized
             && normalized.questionSetId === initialQuestionSet.questionSetId
-            && normalized.version === legacyInitialQuestionSet.version
+            && STANDARD_MIGRATION_VERSIONS.includes(normalized.version)
           ) {
             localStorage.setItem(MIGRATION_BACKUP_KEY, JSON.stringify(normalized));
             setQuestionSet(initialQuestionSet);
@@ -426,7 +428,7 @@ export default function Home() {
             setSelectedQuestionId('profile-name');
             setNotice({
               tone: 'success',
-              message: '人生史の標準設問を45問へ更新しました。以前の下書きはブラウザ内にバックアップしています。',
+              message: '標準設問を、具体的な場面から答えられる第3版へ更新しました。以前の下書きはブラウザ内にバックアップしています。',
             });
           } else if (normalized) {
             setQuestionSet(normalized);
