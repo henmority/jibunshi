@@ -402,6 +402,7 @@ export default function Home() {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [importOpen, setImportOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [deleteQuestionOpen, setDeleteQuestionOpen] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   const [historyState, setHistoryState] = useState({ undoCount: 0, redoCount: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -601,6 +602,28 @@ export default function Home() {
     updateSection({ questions: [...selectedSection.questions, duplicate] });
     setSelectedQuestionId(duplicate.id);
     setNotice({ tone: 'success', message: '設問を複製しました。' });
+  }
+
+  function deleteQuestion() {
+    if (!selectedQuestion || !selectedSection) return;
+    const selectedIndex = selectedSection.questions.findIndex(
+      (question) => question.id === selectedQuestion.id,
+    );
+    const remainingQuestions = selectedSection.questions
+      .filter((question) => question.id !== selectedQuestion.id)
+      .map((question, index) => ({ ...question, order: (index + 1) * 10 }));
+    const nextQuestion = remainingQuestions[Math.min(selectedIndex, remainingQuestions.length - 1)];
+    const deletedQuestionText = selectedQuestion.text;
+
+    updateSection({ questions: remainingQuestions });
+    setSelectedQuestionId(nextQuestion?.id ?? '');
+    setCheckedIds((current) => current.filter((id) => id !== selectedQuestion.id));
+    setDeleteQuestionOpen(false);
+    setEditorTab('edit');
+    setNotice({
+      tone: 'success',
+      message: `「${deletedQuestionText}」を削除しました。上部の「元に戻す」で復元できます。`,
+    });
   }
 
   function addSection() {
@@ -1033,9 +1056,14 @@ export default function Home() {
               )}
 
               <div className="editor-footer">
-                <button className="button secondary danger" onClick={() => updateQuestion({ enabled: !selectedQuestion.enabled })}>
-                  {selectedQuestion.enabled ? '非表示にする' : '表示に戻す'}
-                </button>
+                <div className="editor-footer-actions">
+                  <button className="button secondary danger" onClick={() => updateQuestion({ enabled: !selectedQuestion.enabled })}>
+                    {selectedQuestion.enabled ? '非表示にする' : '表示に戻す'}
+                  </button>
+                  <button className="button destructive" onClick={() => setDeleteQuestionOpen(true)}>
+                    設問を削除
+                  </button>
+                </div>
                 <select value={selectedQuestion.reviewStatus} onChange={(event) => updateQuestion({ reviewStatus: event.target.value as ReviewStatus })} aria-label="確認状態">
                   <option value="unreviewed">未確認</option>
                   <option value="needs_revision">要修正</option>
@@ -1123,6 +1151,23 @@ export default function Home() {
             </div>
             <p className="publish-note">エラーと未確認項目が0になると、公開用JSONから管理者情報を除いて書き出せます。警告は確認メモを残したうえで許容できます。</p>
             <button className="button primary modal-primary" onClick={() => setPublishOpen(false)}>編集に戻る</button>
+          </div>
+        </div>
+      )}
+
+      {deleteQuestionOpen && selectedQuestion && (
+        <div className="modal-layer" role="dialog" aria-modal="true" aria-label="設問の削除確認">
+          <div className="utility-modal delete-modal">
+            <div className="utility-heading">
+              <div><p className="label">DELETE QUESTION</p><h2>この設問を削除しますか？</h2></div>
+              <button className="modal-close" onClick={() => setDeleteQuestionOpen(false)} aria-label="削除確認を閉じる">×</button>
+            </div>
+            <p className="delete-question-text">{selectedQuestion.text}</p>
+            <p className="utility-lead">設問セットから完全に削除されます。削除後でも、画面上部の「元に戻す」で復元できます。</p>
+            <div className="delete-modal-actions">
+              <button className="button secondary" onClick={() => setDeleteQuestionOpen(false)}>キャンセル</button>
+              <button className="button destructive" onClick={deleteQuestion}>設問を削除する</button>
+            </div>
           </div>
         </div>
       )}
