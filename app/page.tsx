@@ -347,7 +347,17 @@ function publicQuestionSet(questionSet: QuestionSet) {
         questions: section.questions
           .filter((question) => question.enabled)
           .sort((a, b) => a.order - b.order)
-          .map(({ source: _source, reviewStatus: _reviewStatus, intent: _intent, aiOriginalText: _aiOriginalText, reviewMemo: _reviewMemo, ...question }) => question),
+          .map((question) => ({
+            id: question.id,
+            text: question.text,
+            helpText: question.helpText,
+            answerType: question.answerType,
+            required: question.required,
+            order: question.order,
+            tags: question.tags,
+            enabled: question.enabled,
+            ...(question.options ? { options: question.options } : {}),
+          })),
       })),
   };
 }
@@ -427,29 +437,32 @@ export default function Home() {
   const [importOpen, setImportOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
-  const [historyVersion, setHistoryVersion] = useState(0);
+  const [historyState, setHistoryState] = useState({ undoCount: 0, redoCount: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<QuestionSet[]>([]);
   const futureRef = useRef<QuestionSet[]>([]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const normalized = normalizeImportedData(JSON.parse(stored));
-        if (normalized) setQuestionSet(normalized);
+    const timer = window.setTimeout(() => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const normalized = normalizeImportedData(JSON.parse(stored));
+          if (normalized) setQuestionSet(normalized);
+        }
+      } catch {
+        setNotice({ tone: 'warning', message: '保存データを読み込めなかったため、初期データを表示しています。' });
+      } finally {
+        setHydrated(true);
       }
-    } catch {
-      setNotice({ tone: 'warning', message: '保存データを読み込めなかったため、初期データを表示しています。' });
-    } finally {
-      setHydrated(true);
-    }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    setSaveState('saving');
-    const timer = window.setTimeout(() => {
+    const savingTimer = window.setTimeout(() => setSaveState('saving'), 0);
+    const persistTimer = window.setTimeout(() => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(questionSet));
         setSaveState('saved');
@@ -457,7 +470,10 @@ export default function Home() {
         setSaveState('failed');
       }
     }, 320);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(savingTimer);
+      window.clearTimeout(persistTimer);
+    };
   }, [questionSet, hydrated]);
 
   useEffect(() => {
@@ -470,14 +486,6 @@ export default function Home() {
     ?? questionSet.sections[0];
   const selectedQuestion = selectedSection?.questions.find((question) => question.id === selectedQuestionId)
     ?? selectedSection?.questions[0];
-
-  useEffect(() => {
-    if (!selectedSection) return;
-    if (!selectedSection.questions.some((question) => question.id === selectedQuestionId)) {
-      setSelectedQuestionId(selectedSection.questions[0]?.id ?? '');
-    }
-    setCheckedIds([]);
-  }, [selectedSectionId, selectedSection, selectedQuestionId]);
 
   const filteredQuestions = useMemo(() => {
     if (!selectedSection) return [];
@@ -524,7 +532,7 @@ export default function Home() {
       if (recordHistory) {
         historyRef.current = [...historyRef.current.slice(-29), current];
         futureRef.current = [];
-        setHistoryVersion((value) => value + 1);
+        setHistoryState({ undoCount: historyRef.current.length, redoCount: 0 });
       }
       const updated = updater(current);
       return { ...updated, updatedAt: new Date().toISOString() };
@@ -537,7 +545,7 @@ export default function Home() {
       if (!previous) return current;
       historyRef.current = historyRef.current.slice(0, -1);
       futureRef.current = [...futureRef.current, current];
-      setHistoryVersion((value) => value + 1);
+      setHistoryState({ undoCount: historyRef.current.length, redoCount: futureRef.current.length });
       return previous;
     });
   }
@@ -548,7 +556,7 @@ export default function Home() {
       if (!next) return current;
       futureRef.current = futureRef.current.slice(0, -1);
       historyRef.current = [...historyRef.current, current];
-      setHistoryVersion((value) => value + 1);
+      setHistoryState({ undoCount: historyRef.current.length, redoCount: futureRef.current.length });
       return next;
     });
   }
@@ -632,6 +640,12 @@ export default function Home() {
     setNotice({ tone: 'success', message: 'セクションを追加しました。見出しを編集できます。' });
   }
 
+  function selectSection(section: Section) {
+    setSelectedSectionId(section.id);
+    setSelectedQuestionId(section.questions[0]?.id ?? '');
+    setCheckedIds([]);
+  }
+
   function moveQuestion(questionId: string, direction: -1 | 1) {
     if (!selectedSection) return;
     const ordered = [...selectedSection.questions].sort((a, b) => a.order - b.order);
@@ -675,7 +689,7 @@ export default function Home() {
         setSelectedSectionId(imported.sections[0]?.id ?? '');
         setSelectedQuestionId(imported.sections[0]?.questions[0]?.id ?? '');
         setImportOpen(false);
-        setHistoryVersion((value) => value + 1);
+        setHistoryState({ undoCount: historyRef.current.length, redoCount: 0 });
         setNotice({ tone: 'success', message: '現在の内容を退避し、新しい下書きとして読み込みました。' });
       } catch {
         setNotice({ tone: 'warning', message: 'JSONの形式を確認できませんでした。設問セットのファイルを選んでください。' });
@@ -764,14 +778,16 @@ export default function Home() {
 
         <div className="header-actions">
           <div className="history-actions" aria-label="編集履歴">
-            <button onClick={undo} disabled={!historyRef.current.length} aria-label="元に戻す">↶</button>
-            <button onClick={redo} disabled={!futureRef.current.length} aria-label="やり直す">↷</button>
-            <span className="sr-only">{historyVersion}</span>
+            <button onClick={undo} disabled={!historyState.undoCount} aria-label="元に戻す">↶</button>
+            <button onClick={redo} disabled={!historyState.redoCount} aria-label="やり直す">↷</button>
           </div>
           <button className="button secondary" onClick={() => { setPreviewIndex(0); setPreviewOpen(true); }}>
             ◉ 利用者画面で確認
           </button>
           <button className="button secondary json-button" onClick={() => setImportOpen(true)}>JSON</button>
+          <form className="logout-form" action="/api/auth/logout" method="post">
+            <button className="button secondary logout-button" type="submit">ログアウト</button>
+          </form>
           <button className="button primary" onClick={exportPublished}>公開用を書き出す</button>
         </div>
       </header>
@@ -792,7 +808,7 @@ export default function Home() {
                 <button
                   className={`section-row ${section.id === selectedSection?.id ? 'active' : ''} ${!section.enabled ? 'disabled' : ''}`}
                   key={section.id}
-                  onClick={() => setSelectedSectionId(section.id)}
+                  onClick={() => selectSection(section)}
                 >
                   <span className="drag-handle" aria-hidden="true">⠿</span>
                   <span className="section-name">{section.title}</span>

@@ -76,6 +76,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .save-state.failed i { background: var(--red); }
 @keyframes pulse { 50% { opacity: .35; } }
 .header-actions { justify-content: flex-end; gap: 8px; }
+.logout-form { margin: 0; }
 .history-actions { display: flex; padding-right: 5px; border-right: 1px solid var(--line); }
 .history-actions button, .editor-heading-actions button, .move-actions button {
   border: 0; background: transparent; cursor: pointer;
@@ -96,6 +97,38 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .button.danger { color: #8e493e; }
 .button:hover, .icon-button:hover, .filter-button:hover { filter: brightness(.98); border-color: #b9b8b1; }
 .button:active, .icon-button:active { transform: translateY(1px); }
+
+/* Authentication */
+.login-shell {
+  min-height: 100vh; display: grid; place-items: center; padding: 28px;
+  background:
+    radial-gradient(circle at 20% 15%, rgb(73 104 88 / 10%), transparent 30%),
+    radial-gradient(circle at 85% 80%, rgb(50 79 101 / 10%), transparent 34%),
+    var(--canvas);
+}
+.login-card {
+  width: min(420px, 100%); padding: 42px 40px 34px; border: 1px solid var(--line); border-radius: 18px;
+  background: rgb(255 254 250 / 97%); box-shadow: var(--shadow); text-align: center;
+}
+.login-mark {
+  width: 52px; height: 52px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--blue); color: white; font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; font-size: 25px;
+}
+.login-card h1 { margin: 10px 0 8px; font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; font-size: 24px; letter-spacing: .05em; }
+.login-description { margin: 0 0 25px; color: var(--muted); font-size: 12px; }
+.login-error { margin: 0 0 16px; padding: 10px 12px; border-radius: 8px; background: var(--red-soft); color: var(--red); font-size: 11px; line-height: 1.5; }
+.login-form { display: flex; flex-direction: column; gap: 9px; text-align: left; }
+.login-form label { color: #4e514c; font-size: 10px; font-weight: 700; }
+.login-form input {
+  height: 45px; padding: 0 12px; border: 1px solid #d1d0c8; border-radius: 9px; background: white; color: var(--ink);
+}
+.login-form input:focus { border-color: #698498; box-shadow: 0 0 0 3px rgb(71 103 125 / 10%); outline: 0; }
+.login-form button {
+  height: 43px; margin-top: 5px; border: 1px solid var(--blue); border-radius: 9px; background: var(--blue);
+  color: white; cursor: pointer; font-size: 12px; font-weight: 700;
+}
+.login-form button:hover { background: var(--blue-hover); }
+.login-note { margin: 18px 0 0; color: #92958f; font-size: 9px; }
 
 /* Three-column workspace */
 .workspace { display: grid; grid-template-columns: 224px minmax(520px, 1fr) 360px; min-height: calc(100vh - 76px); }
@@ -350,7 +383,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .brand-block .eyebrow { display: none; }
   .brand-mark { width: 33px; height: 33px; }
   .brand-name { font-size: 13px; }
-  .header-actions .secondary:not(.json-button), .history-actions { display: none; }
+  .header-actions .secondary:not(.json-button):not(.logout-button), .history-actions { display: none; }
   .header-actions .button { min-height: 34px; padding: 0 9px; font-size: 9px; }
   .workspace { display: block; }
   .section-panel { display: none; }
@@ -373,4 +406,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .preview-modal { width: 100vw; height: 100vh; border-radius: 0; }
   .utility-card { grid-template-columns: 34px 1fr; }
   .utility-card .button { grid-column: 2; justify-self: start; }
+}
+
+@media (max-width: 520px) {
+  .login-shell { padding: 15px; }
+  .login-card { padding: 34px 22px 28px; }
 }

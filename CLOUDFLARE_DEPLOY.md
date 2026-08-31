@@ -1,6 +1,6 @@
 # GitHub + Cloudflare Workers 公開手順
 
-このアプリは現在、設問を編集する管理者向け画面である。利用者向け画面が完成するまでは一般公開せず、Cloudflare Accessで管理者だけが開けるようにする。
+このアプリは現在、設問を編集する管理者向け画面である。利用者向け画面が完成するまでは一般公開せず、Worker内認証で管理者だけが開けるようにする。
 
 ## 1. ローカルで確認
 
@@ -49,11 +49,29 @@ Worker名は `wrangler.jsonc` の `name` と一致させる。
 
 ## 4. 環境変数
 
-CloudflareのWorker設定から、次の通常変数を追加する。
+公開URLは `wrangler.jsonc` の通常変数へ設定する。
 
 | 名前 | 値 |
 | --- | --- |
-| `SITE_URL` | 最終的な管理画面URL。例: `https://admin.example.com` |
+| `SITE_URL` | 最終的な管理画面URL |
+
+管理画面の認証情報はCloudflare Secretへ設定する。
+
+| Secret名 | 用途 |
+| --- | --- |
+| `ADMIN_PASSWORD` | 管理者ログイン用パスワード |
+| `AUTH_COOKIE_SECRET` | 12時間有効なログインCookieの署名鍵 |
+
+```bash
+npx wrangler secret put ADMIN_PASSWORD
+npx wrangler secret put AUTH_COOKIE_SECRET
+```
+
+Secretの値を `.env`、GitHub、ブラウザのコードへ保存しない。このMacでは管理者パスワードをmacOSキーチェーンへ保存している。次のコマンドで、画面に表示せずクリップボードへコピーできる。
+
+```bash
+npm run auth:copy-password
+```
 
 AI連携を実装した後は、APIキーを通常変数ではなくSecretとして追加する。
 
@@ -61,29 +79,22 @@ AI連携を実装した後は、APIキーを通常変数ではなくSecretとし
 | --- | --- |
 | `OPENAI_API_KEY` | AI生成APIの認証 |
 
-秘密鍵を `.env`、GitHub、ブラウザのコードへ保存しない。
+AIの秘密鍵も `.env`、GitHub、ブラウザのコードへ保存しない。
 
-## 5. 管理画面をAccessで保護
+## 5. 管理画面の認証を確認
 
-独自ドメインをCloudflareで管理している場合、先にZero Trust側で `admin.example.com` を保護する。
+デプロイ後、ログインしていないブラウザで公開URLを開き、管理画面ではなく「設問編集室へログイン」が表示されることを確認する。
 
-1. `Zero Trust` を開く
-2. `Access controls` → `Applications`
-3. `Create new application`
-4. `Self-hosted` を選ぶ
-5. Public hostnameへ `admin.example.com` を入力する
-6. `Allow` ポリシーを作る
-7. 自分のメールアドレス、またはCloudflare Account Memberだけを許可する
-8. セッション時間を設定して保存する
+1. `npm run auth:copy-password` でパスワードをコピーする
+2. ログイン画面へ貼り付ける
+3. 管理画面が表示されることを確認する
+4. ヘッダーの「ログアウト」でログイン画面へ戻ることを確認する
 
-Accessを設定した後、Workerで次の操作を行う。
+ログインCookieは `HttpOnly`、`Secure`、`SameSite=Strict` で、12時間後に失効する。パスワードを変更する場合は `ADMIN_PASSWORD` を再登録し、macOSキーチェーンの同名項目も更新する。
 
-1. `Workers & Pages` → `jibunshi-admin`
-2. `Settings` → `Domains & Routes`
-3. `Add` → `Custom Domain`
-4. `admin.example.com` を追加する
+### Cloudflare Accessへ移行する場合
 
-ログインしていないブラウザから開き、管理画面ではなくAccessの認証画面が表示されることを確認する。
+複数管理者やメール認証が必要になった段階で、Worker単位のCloudflare Accessへ移行する。Zero Trust Freeの有効化画面では、無料枠超過分の支払い手段と請求同意を求められる場合があるため、カード登録と課金条件を確認してから有効化する。
 
 ## 6. 公開後の更新
 
