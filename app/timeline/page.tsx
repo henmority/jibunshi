@@ -29,11 +29,12 @@ type SchoolMarker = {
   id: string;
   label: string;
   stage: '入学' | '在籍' | '卒業';
+  dateLabel: string;
 };
 
 type AgeTimelineRowProps = {
   age: number;
-  year: number;
+  period: string;
   note: string;
   markers: SchoolMarker[];
   isCurrent: boolean;
@@ -193,6 +194,39 @@ function calculateCurrentAge(birthDate: string) {
   return validAge(age);
 }
 
+function formatAgePeriod(birthDate: string, age: number) {
+  const [yearText, monthText] = birthDate.split('-');
+  const birthYear = Number(yearText);
+  const birthMonth = Number(monthText);
+  if (!birthYear || !birthMonth) return '';
+  const startYear = birthYear + age;
+  const endYear = birthMonth === 1 ? startYear : startYear + 1;
+  const endMonth = birthMonth === 1 ? 12 : birthMonth - 1;
+  return `${startYear}年${birthMonth}月〜${endYear}年${endMonth}月`;
+}
+
+function schoolBoundaryYear(birthDate: string, age: number) {
+  const [yearText, monthText, dayText] = birthDate.split('-');
+  const birthYear = Number(yearText);
+  const birthMonth = Number(monthText);
+  const birthDay = Number(dayText);
+  if (!birthYear || !birthMonth || !birthDay) return null;
+  const isBornAfterSchoolCutoff = birthMonth > 4 || (birthMonth === 4 && birthDay >= 2);
+  return birthYear + age + (isBornAfterSchoolCutoff ? 1 : 0);
+}
+
+function formatSchoolPeriod(birthDate: string, school: SchoolRecord) {
+  if (!birthDate) return '生年月日を入力すると、入学・卒業年月を表示します。';
+  const startAge = validAge(school.startAge);
+  const endAge = validAge(school.endAge);
+  if (startAge === null || endAge === null) return '入学・卒業年齢を入力してください。';
+  if (endAge < startAge) return '卒業年齢は、入学年齢以上にしてください。';
+  const startYear = schoolBoundaryYear(birthDate, startAge);
+  const endYear = schoolBoundaryYear(birthDate, endAge);
+  if (startYear === null || endYear === null) return '生年月日を確認してください。';
+  return `${startYear}年4月 入学・入所　〜　${endYear}年3月 卒業・退所`;
+}
+
 function createSchool(type: SchoolType): SchoolRecord {
   const [startAge, endAge] = SCHOOL_DEFAULT_AGES[type];
   return {
@@ -214,18 +248,18 @@ function downloadTimeline(timeline: TimelineData) {
   URL.revokeObjectURL(url);
 }
 
-const AgeTimelineRow = memo(function AgeTimelineRow({ age, year, note, markers, isCurrent, onNoteChange }: AgeTimelineRowProps) {
+const AgeTimelineRow = memo(function AgeTimelineRow({ age, period, note, markers, isCurrent, onNoteChange }: AgeTimelineRowProps) {
   return (
     <div className={`age-timeline-row ${isCurrent ? 'current' : ''} ${note.trim() ? 'filled' : ''}`} id={isCurrent ? 'current-age-row' : undefined}>
       <div className="age-year-cell">
         <strong>{age}<small>歳</small></strong>
-        <span>{year}年</span>
+        <span>{period}</span>
         {isCurrent ? <em>現在</em> : null}
       </div>
       <div className="age-school-cell">
         {markers.length ? markers.map((marker) => (
           <span className="school-marker" key={`${marker.id}-${marker.stage}`}>
-            <b>{marker.stage}</b>{marker.label}
+            {marker.dateLabel ? <small>{marker.dateLabel}</small> : null}<b>{marker.stage}</b><span>{marker.label}</span>
           </span>
         )) : <span className="school-empty">—</span>}
       </div>
@@ -313,16 +347,22 @@ export default function TimelinePage() {
       const endAge = Math.max(startValue, endValue);
       for (let age = startAge; age <= endAge; age += 1) {
         const stage = age === startAge ? '入学' : age === endAge ? '卒業' : '在籍';
+        const boundaryYear = stage === '入学'
+          ? schoolBoundaryYear(timeline.birthDate, startAge)
+          : stage === '卒業'
+            ? schoolBoundaryYear(timeline.birthDate, endAge)
+            : null;
         const marker: SchoolMarker = {
           id: school.id,
           label: school.name.trim() || SCHOOL_LABELS[school.type],
           stage,
+          dateLabel: boundaryYear === null ? '' : `${boundaryYear}年${stage === '入学' ? '4月' : '3月'}`,
         };
         markers.set(age, [...(markers.get(age) ?? []), marker]);
       }
     });
     return markers;
-  }, [timeline.schools]);
+  }, [timeline.birthDate, timeline.schools]);
 
   const ageRows = useMemo(() => Array.from({ length: maxDisplayedAge + 1 }, (_, age) => age), [maxDisplayedAge]);
   const existingSchoolTypes = useMemo(() => new Set(timeline.schools.map((school) => school.type)), [timeline.schools]);
@@ -403,7 +443,7 @@ export default function TimelinePage() {
         <div>
           <p className="label">LIFE TIMELINE</p>
           <h1>年齢に沿って、人生を思い出す</h1>
-          <p>生年月日から年齢と西暦を並べます。覚えているところから、右側の欄へ出来事を入力してください。</p>
+          <p>生年月日から年齢ごとの期間を並べ、学校年度は4月から翌年3月として表示します。覚えているところから出来事を入力してください。</p>
         </div>
         <div className="timeline-profile">
           <label><span>お名前</span><input value={timeline.subjectName} onChange={(event) => updateTimeline({ subjectName: event.target.value })} placeholder="人生史を書く人の名前" /></label>
@@ -475,7 +515,8 @@ export default function TimelinePage() {
                     <span aria-hidden="true">〜</span>
                     <label><span>卒業・退所年齢</span><div><input type="number" min="0" max={MAX_AGE} inputMode="numeric" value={school.endAge} onChange={(event) => updateSchool(school.id, { endAge: event.target.value })} /><b>歳</b></div></label>
                   </div>
-                  <p>自動入力された年齢は、実際に通った時期に合わせて修正できます。</p>
+                  <p className="school-period-preview">{formatSchoolPeriod(timeline.birthDate, school)}</p>
+                  <p>日本の一般的な学校年度（4月〜翌年3月）で計算します。年齢は実際に通った時期に合わせて修正できます。</p>
                 </article>
               ))}
             </div>
@@ -494,15 +535,15 @@ export default function TimelinePage() {
             <div className="age-timeline-empty">
               <span aria-hidden="true">年</span>
               <h3>生年月日を入力してください</h3>
-              <p>入力すると、0歳から現在までの年齢と西暦が自動で表示されます。</p>
+              <p>入力すると、0歳から現在までの年齢と、その年齢だった期間が自動で表示されます。</p>
             </div>
           ) : (
             <div className="age-timeline-table">
-              <div className="age-timeline-head" aria-hidden="true"><span>年齢・西暦</span><span>学校</span><span>出来事・思い出</span></div>
+              <div className="age-timeline-head" aria-hidden="true"><span>年齢・その期間</span><span>学校年度</span><span>出来事・思い出</span></div>
               {ageRows.map((age) => (
                 <AgeTimelineRow
                   age={age}
-                  year={birthYear + age}
+                  period={formatAgePeriod(timeline.birthDate, age)}
                   note={timeline.eventsByAge[String(age)] ?? ''}
                   markers={schoolMarkersByAge.get(age) ?? EMPTY_SCHOOL_MARKERS}
                   isCurrent={age === currentAge}
