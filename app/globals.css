@@ -392,69 +392,119 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .timeline-hero h1 { margin: 7px 0 8px; font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; font-size: clamp(24px, 3vw, 34px); line-height: 1.4; letter-spacing: .04em; }
 .timeline-hero > div > p:last-child { max-width: 680px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.8; }
 .timeline-profile { display: grid; grid-template-columns: 1fr 180px; gap: 10px; }
-.timeline-profile label, .timeline-form-section label { display: flex; flex-direction: column; gap: 6px; color: #555a54; font-size: 9px; font-weight: 700; }
-.timeline-profile input, .timeline-form-section input, .timeline-form-section select, .timeline-form-section textarea, .timeline-filters input, .timeline-filters select {
+.timeline-profile label { display: flex; flex-direction: column; gap: 6px; color: #555a54; font-size: 9px; font-weight: 700; }
+.timeline-profile input {
   width: 100%; border: 1px solid #d6d4cc; border-radius: 8px; background: white; color: var(--ink); outline: 0;
 }
 .timeline-profile input { height: 42px; padding: 0 11px; }
-.timeline-profile input:focus, .timeline-form-section input:focus, .timeline-form-section select:focus, .timeline-form-section textarea:focus, .timeline-filters input:focus, .timeline-filters select:focus { border-color: #698498; box-shadow: 0 0 0 3px rgb(71 103 125 / 9%); }
-.timeline-stats { display: grid; grid-template-columns: 150px 190px 170px 1fr; align-items: stretch; margin: 22px max(28px, calc((100vw - 1400px) / 2)); border: 1px solid var(--line); border-radius: 12px; background: var(--paper); overflow: hidden; }
-.timeline-stats > div { min-height: 72px; display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 12px 18px; border-right: 1px solid var(--line); }
-.timeline-stats strong { font-family: "Yu Mincho", serif; font-size: 20px; }
-.timeline-stats span { color: var(--muted); font-size: 8px; }
-.timeline-stats > p { align-self: center; margin: 0; padding: 12px 18px; color: var(--muted); font-size: 9px; line-height: 1.6; text-align: right; }
-.timeline-workspace { display: grid; grid-template-columns: minmax(480px, 1fr) 430px; min-height: 680px; margin: 0 max(28px, calc((100vw - 1400px) / 2)) 50px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); box-shadow: 0 8px 32px rgb(33 38 35 / 7%); overflow: hidden; }
-.timeline-list-panel { min-width: 0; padding: 25px 27px 40px; background: #f8f6f0; }
-.timeline-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
-.timeline-toolbar h2, .timeline-editor-heading h2 { margin: 5px 0 0; font-family: "Yu Mincho", serif; font-size: 21px; }
-.timeline-filters { display: grid; grid-template-columns: 1fr 160px; gap: 8px; margin: 20px 0 22px; }
-.timeline-filters input, .timeline-filters select { height: 39px; padding: 0 11px; font-size: 10px; }
-.timeline-list { position: relative; display: flex; flex-direction: column; padding: 4px 0 20px; }
-.timeline-list::before { content: ''; position: absolute; top: 0; bottom: 0; left: 23px; width: 1px; background: #cbc7bc; }
-.timeline-entry-card { position: relative; display: grid; grid-template-columns: 48px 1fr; min-width: 0; }
-.timeline-point { position: relative; min-height: 112px; }
-.timeline-point i { position: absolute; z-index: 1; top: 28px; left: 18px; width: 11px; height: 11px; border: 3px solid #f8f6f0; border-radius: 50%; background: #8f928b; box-shadow: 0 0 0 1px #b9b6ad; }
-.timeline-entry-card.selected .timeline-point i { background: var(--blue); box-shadow: 0 0 0 2px #9aafbc; }
-.timeline-entry-card > button { min-width: 0; display: grid; grid-template-columns: 125px minmax(0, 1fr); gap: 16px; margin: 5px 0 9px; padding: 17px 18px; border: 1px solid #dedbd2; border-radius: 10px; background: var(--paper); cursor: pointer; text-align: left; }
-.timeline-entry-card > button:hover { border-color: #bfc7c7; box-shadow: 0 4px 14px rgb(44 49 45 / 6%); }
-.timeline-entry-card.selected > button { border-color: #8da3b1; box-shadow: 0 0 0 2px rgb(78 112 133 / 9%); }
-.timeline-entry-period { display: flex; flex-direction: column; gap: 5px; padding-right: 13px; border-right: 1px solid var(--line); }
-.timeline-entry-period strong { font-family: "Yu Mincho", serif; font-size: 13px; line-height: 1.5; }
-.timeline-entry-period span { color: var(--muted); font-size: 9px; }
-.timeline-entry-copy { min-width: 0; }
-.timeline-entry-copy h3 { margin: 7px 0 4px; font-family: "Yu Mincho", serif; font-size: 16px; line-height: 1.45; }
-.timeline-entry-copy p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
-.timeline-entry-copy .timeline-fact-preview { display: -webkit-box; margin-top: 8px; color: #565b55; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.timeline-category { display: inline-flex; padding: 4px 7px; border-radius: 999px; background: #ecebe5; color: #696d67; font-size: 8px; font-weight: 700; }
-.timeline-category.home { background: #eee8de; color: #806442; }
-.timeline-category.school { background: #e8eef2; color: #48677b; }
-.timeline-category.work { background: #e8edef; color: #425c68; }
-.timeline-category.family { background: #f3e8e6; color: #8a5147; }
-.timeline-category.meeting { background: #edf0e4; color: #627346; }
-.timeline-category.turning { background: #f4eadb; color: #946126; }
-.timeline-empty { min-height: 400px; display: grid; place-items: center; align-content: center; padding: 35px; color: var(--muted); text-align: center; }
-.timeline-empty > span { width: 45px; height: 45px; display: grid; place-items: center; border: 1px solid #c9c7bf; border-radius: 50%; font-size: 22px; }
-.timeline-empty h3 { margin: 14px 0 6px; color: #555a54; font-family: "Yu Mincho", serif; font-size: 17px; }
-.timeline-empty p { max-width: 430px; margin: 0 0 18px; font-size: 10px; line-height: 1.8; }
-.timeline-editor { min-width: 0; display: flex; flex-direction: column; border-left: 1px solid var(--line); background: var(--paper); }
-.timeline-editor-heading { min-height: 82px; display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--line); }
-.timeline-editor-heading-actions { display: flex; gap: 7px; }
-.timeline-editor-close { display: none; width: 34px; height: 34px; border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 23px; }
-.timeline-delete-icon { width: 34px; height: 34px; border: 1px solid #e0ccc8; border-radius: 8px; background: var(--red-soft); color: var(--red); cursor: pointer; font-size: 16px; }
-.timeline-editor-scroll { flex: 1; padding: 0 22px 30px; overflow-y: auto; }
-.timeline-form-section { display: flex; flex-direction: column; gap: 13px; padding: 22px 0; border-bottom: 1px solid var(--line); }
-.timeline-form-section:last-child { border-bottom: 0; }
-.timeline-form-section h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 3px; font-size: 11px; }
-.timeline-form-section h3 > span { width: 21px; height: 21px; display: grid; place-items: center; border-radius: 50%; background: var(--blue); color: white; font-size: 8px; }
-.timeline-form-section h3 small { margin-left: auto; color: var(--muted); font-size: 8px; font-weight: 500; }
-.timeline-form-section.story h3 > span { background: #8b6c48; }
-.timeline-form-section input, .timeline-form-section select { height: 38px; padding: 0 10px; font-size: 10px; }
-.timeline-form-section textarea { padding: 9px 10px; resize: vertical; font-size: 10px; line-height: 1.7; }
-.timeline-date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-.timeline-editor-empty { height: 100%; display: grid; place-items: center; align-content: center; padding: 35px; color: var(--muted); text-align: center; }
-.timeline-editor-empty > span { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: var(--blue-soft); color: var(--blue); font-family: "Yu Mincho", serif; font-size: 15px; }
-.timeline-editor-empty h3 { margin: 13px 0 5px; color: #555a54; font-family: "Yu Mincho", serif; font-size: 16px; }
-.timeline-editor-empty p { max-width: 260px; margin: 0; font-size: 9px; line-height: 1.7; }
+.timeline-profile input:focus { border-color: #698498; box-shadow: 0 0 0 3px rgb(71 103 125 / 9%); }
+/* Age-based timeline */
+.age-timeline-hero { align-items: center; }
+.age-timeline-main {
+  width: min(1320px, calc(100% - 56px)); margin: 22px auto 60px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.timeline-summary {
+  display: grid; grid-template-columns: 155px 155px 155px 1fr;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--paper); overflow: hidden;
+}
+.timeline-summary > div {
+  min-height: 76px; display: flex; flex-direction: column; justify-content: center; gap: 5px;
+  padding: 13px 20px; border-right: 1px solid var(--line);
+}
+.timeline-summary span { color: var(--muted); font-size: 9px; }
+.timeline-summary strong { font-family: "Yu Mincho", serif; font-size: 22px; }
+.timeline-summary strong small { margin-left: 2px; font-family: sans-serif; font-size: 9px; }
+.timeline-summary > p { align-self: center; margin: 0; padding: 14px 20px; color: var(--muted); font-size: 9px; text-align: right; }
+.school-history-card, .age-timeline-card, .undated-notes-card {
+  border: 1px solid var(--line); border-radius: 14px; background: var(--paper);
+  box-shadow: 0 8px 30px rgb(33 38 35 / 5%); overflow: hidden;
+}
+.school-history-heading, .age-timeline-heading {
+  display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 24px 26px;
+}
+.school-history-heading h2, .age-timeline-heading h2, .undated-notes-card h2 {
+  margin: 5px 0 0; font-family: "Yu Mincho", serif; font-size: 21px;
+}
+.school-history-heading > div > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.school-picker { padding: 21px 25px; border-top: 1px solid var(--line); background: #f5f7f6; }
+.school-checkboxes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+.school-checkboxes label {
+  min-height: 65px; display: flex; align-items: center; gap: 10px; padding: 11px 12px;
+  border: 1px solid #d6d9d5; border-radius: 9px; background: white; cursor: pointer;
+}
+.school-checkboxes label:hover { border-color: #9aabb3; }
+.school-checkboxes label.added { background: var(--green-soft); color: var(--green); cursor: default; }
+.school-checkboxes input { width: 17px; height: 17px; flex: 0 0 auto; accent-color: var(--blue); }
+.school-checkboxes label > span { display: flex; flex-direction: column; gap: 4px; }
+.school-checkboxes strong { font-size: 12px; }
+.school-checkboxes small { color: var(--muted); font-size: 8px; }
+.school-picker-actions { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 15px; }
+.school-picker-actions p { margin: 0; color: var(--muted); font-size: 9px; }
+.button:disabled { opacity: .42; cursor: not-allowed; transform: none; }
+.school-record-list {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px;
+  padding: 21px 25px 25px; border-top: 1px solid var(--line); background: #faf9f5;
+}
+.school-record {
+  min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) 225px; gap: 13px 18px;
+  padding: 17px; border: 1px solid #dcdbd4; border-radius: 11px; background: white;
+}
+.school-record-title { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; }
+.school-record-title > span { padding: 5px 9px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 9px; font-weight: 800; }
+.school-record-title button { border: 0; background: transparent; color: var(--red); cursor: pointer; font-size: 9px; text-decoration: underline; }
+.school-record label { display: flex; flex-direction: column; gap: 6px; color: #555a54; font-size: 9px; font-weight: 700; }
+.school-record input, .undated-notes-card textarea {
+  width: 100%; border: 1px solid #d6d4cc; border-radius: 8px; background: white; color: var(--ink); outline: 0;
+}
+.school-record input { height: 40px; padding: 0 10px; }
+.school-record input:focus, .undated-notes-card textarea:focus { border-color: #698498; box-shadow: 0 0 0 3px rgb(71 103 125 / 9%); }
+.school-age-fields { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 7px; }
+.school-age-fields > span { padding-bottom: 12px; color: var(--muted); }
+.school-age-fields label > div { position: relative; }
+.school-age-fields input { padding-right: 30px; }
+.school-age-fields b { position: absolute; right: 10px; top: 12px; color: var(--muted); font-size: 9px; }
+.school-record > p { grid-column: 1 / -1; margin: -3px 0 0; color: var(--muted); font-size: 8px; line-height: 1.6; }
+.school-record-empty { padding: 25px; border-top: 1px solid var(--line); background: #faf9f5; color: var(--muted); font-size: 10px; text-align: center; }
+.age-timeline-heading { border-bottom: 1px solid var(--line); }
+.age-timeline-table { position: relative; }
+.age-timeline-head, .age-timeline-row { display: grid; grid-template-columns: 145px minmax(220px, 310px) minmax(360px, 1fr); }
+.age-timeline-head {
+  position: sticky; top: 72px; z-index: 10; min-height: 39px; align-items: center;
+  border-bottom: 1px solid var(--line); background: #eeeDE7; color: #6c706a; font-size: 8px; font-weight: 800; letter-spacing: .08em;
+}
+.age-timeline-head span { padding: 0 18px; }
+.age-timeline-head span + span { border-left: 1px solid #d8d6cf; }
+.age-timeline-row { min-height: 96px; border-bottom: 1px solid #e5e2da; content-visibility: auto; contain-intrinsic-size: 96px; }
+.age-timeline-row:last-child { border-bottom: 0; }
+.age-timeline-row:hover { background: #fbfaf7; }
+.age-timeline-row.current { background: #f1f5f4; box-shadow: inset 4px 0 0 var(--green); }
+.age-timeline-row.filled { box-shadow: inset 4px 0 0 #7890a0; }
+.age-timeline-row.current.filled { box-shadow: inset 4px 0 0 var(--green); }
+.age-year-cell { display: grid; grid-template-columns: auto 1fr; align-content: center; gap: 4px 12px; padding: 16px 18px; }
+.age-year-cell strong { grid-row: 1 / 3; align-self: center; min-width: 47px; color: #2f5065; font-family: "Yu Mincho", serif; font-size: 27px; line-height: 1; }
+.age-year-cell strong small { margin-left: 2px; font-family: sans-serif; font-size: 10px; }
+.age-year-cell > span { align-self: end; color: #616660; font-size: 10px; }
+.age-year-cell em { align-self: start; width: max-content; padding: 2px 5px; border-radius: 4px; background: var(--green); color: white; font-size: 7px; font-style: normal; font-weight: 800; }
+.age-school-cell { display: flex; flex-wrap: wrap; align-content: center; gap: 6px; padding: 14px 18px; border-left: 1px solid #e5e2da; }
+.school-marker { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 7px; background: #e9eff2; color: #3c5b6e; font-size: 9px; font-weight: 700; line-height: 1.35; }
+.school-marker b { padding: 2px 4px; border-radius: 3px; background: white; color: #71838d; font-size: 7px; }
+.school-empty { color: #bbbcb6; }
+.age-event-cell { display: flex; align-items: center; padding: 12px 15px; border-left: 1px solid #e5e2da; }
+.age-event-cell textarea {
+  width: 100%; min-height: 66px; padding: 11px 12px; resize: vertical;
+  border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--ink); outline: 0;
+  font-size: 11px; line-height: 1.7;
+}
+.age-event-cell textarea:hover { border-color: #d6d4cc; background: white; }
+.age-event-cell textarea:focus { border-color: #698498; background: white; box-shadow: 0 0 0 3px rgb(71 103 125 / 9%); }
+.age-event-cell textarea::placeholder { color: #aaaDA7; }
+.age-timeline-empty { min-height: 300px; display: grid; place-items: center; align-content: center; padding: 35px; color: var(--muted); text-align: center; }
+.age-timeline-empty > span { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--blue-soft); color: var(--blue); font-family: "Yu Mincho", serif; }
+.age-timeline-empty h3 { margin: 14px 0 5px; color: #555a54; font-family: "Yu Mincho", serif; font-size: 17px; }
+.age-timeline-empty p { margin: 0; font-size: 10px; }
+.undated-notes-card { display: grid; grid-template-columns: 300px 1fr; align-items: start; gap: 20px; padding: 24px 26px; }
+.undated-notes-card textarea { padding: 12px; resize: vertical; font-size: 11px; line-height: 1.7; }
 
 @media (max-width: 1200px) {
   .topbar { grid-template-columns: auto 1fr; }
@@ -463,7 +513,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .timeline-topbar { grid-template-columns: 1fr auto; }
   .timeline-topbar .studio-nav { display: none; }
   .timeline-hero { grid-template-columns: 1fr; gap: 24px; }
-  .timeline-workspace { grid-template-columns: minmax(420px, 1fr) 390px; }
+  .school-record { grid-template-columns: 1fr; }
+  .school-record-title, .school-record > p { grid-column: auto; }
+  .school-checkboxes { grid-template-columns: repeat(2, 1fr); }
+  .age-timeline-head, .age-timeline-row { grid-template-columns: 130px 250px minmax(330px, 1fr); }
 }
 
 @media (max-width: 980px) {
@@ -471,11 +524,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .editor-panel { position: fixed; z-index: 30; right: 0; top: 76px; width: min(370px, 94vw); box-shadow: -12px 0 35px rgb(35 39 36 / 13%); }
   .question-card { grid-template-columns: 24px 30px minmax(0, 1fr) auto auto; }
   .move-actions { display: none; }
-  .timeline-workspace { display: block; }
-  .timeline-editor { position: fixed; z-index: 40; top: 72px; right: 0; bottom: 0; width: min(430px, 96vw); display: none; border-left: 1px solid var(--line); box-shadow: -14px 0 36px rgb(35 39 36 / 16%); }
-  .timeline-editor.open { display: flex; }
-  .timeline-editor-close { display: block; }
-  .timeline-editor-empty { display: none; }
+  .timeline-summary { grid-template-columns: repeat(3, 1fr); }
+  .timeline-summary > p { display: none; }
+  .school-record-list { grid-template-columns: 1fr; }
+  .school-record { grid-template-columns: minmax(0, 1fr) 225px; }
+  .school-record-title, .school-record > p { grid-column: 1 / -1; }
+  .age-timeline-head, .age-timeline-row { grid-template-columns: 115px 220px minmax(300px, 1fr); }
+  .age-timeline-card { overflow-x: auto; }
+  .age-timeline-heading { position: sticky; left: 0; }
+  .undated-notes-card { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 700px) {
@@ -512,19 +569,36 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .timeline-header-actions .button { min-height: 34px; padding: 0 9px; font-size: 9px; }
   .timeline-hero { padding: 27px 16px; }
   .timeline-profile { grid-template-columns: 1fr; }
-  .timeline-stats { grid-template-columns: repeat(3, 1fr); margin: 14px; }
-  .timeline-stats > div { min-height: 66px; padding: 10px; text-align: center; }
-  .timeline-stats > p { display: none; }
-  .timeline-workspace { min-height: 520px; margin: 0 14px 35px; }
-  .timeline-list-panel { padding: 20px 14px 32px; }
-  .timeline-filters { grid-template-columns: 1fr; }
-  .timeline-entry-card { grid-template-columns: 37px 1fr; }
-  .timeline-list::before { left: 17px; }
-  .timeline-point i { left: 12px; }
-  .timeline-entry-card > button { grid-template-columns: 1fr; gap: 9px; padding: 14px; }
-  .timeline-entry-period { flex-direction: row; align-items: center; border-right: 0; padding-right: 0; }
-  .timeline-entry-copy h3 { font-size: 14px; }
-  .timeline-editor { top: 66px; width: 100vw; }
+  .age-timeline-main { width: calc(100% - 28px); margin: 14px auto 36px; gap: 14px; }
+  .timeline-summary > div { min-height: 65px; padding: 10px 8px; text-align: center; }
+  .timeline-summary strong { font-size: 18px; }
+  .school-history-heading, .age-timeline-heading { align-items: flex-start; padding: 19px 16px; }
+  .school-history-heading { flex-direction: column; }
+  .school-history-heading .button { width: 100%; }
+  .school-picker { padding: 16px; }
+  .school-checkboxes { grid-template-columns: 1fr; }
+  .school-picker-actions { align-items: stretch; flex-direction: column; }
+  .school-picker-actions .button { width: 100%; }
+  .school-record-list { padding: 14px; }
+  .school-record { grid-template-columns: 1fr; }
+  .school-record-title, .school-record > p { grid-column: auto; }
+  .age-timeline-card { overflow: hidden; }
+  .age-timeline-heading .button { min-height: 34px; padding: 0 9px; font-size: 8px; }
+  .age-timeline-head, .age-timeline-row { grid-template-columns: 88px minmax(0, 1fr); }
+  .age-timeline-head { top: 66px; }
+  .age-timeline-head span { padding: 0 11px; }
+  .age-timeline-head span:nth-child(2) { display: none; }
+  .age-timeline-head span:nth-child(3) { grid-column: 2; }
+  .age-timeline-row { min-height: 112px; content-visibility: visible; }
+  .age-year-cell { grid-row: 1 / 3; padding: 13px 10px; gap: 4px; text-align: center; }
+  .age-year-cell strong { grid-row: auto; min-width: 0; font-size: 24px; }
+  .age-year-cell > span, .age-year-cell em { justify-self: center; }
+  .age-school-cell { grid-column: 2; min-height: 0; padding: 9px 10px 0; border-left: 1px solid #e5e2da; }
+  .age-school-cell:has(.school-empty) { display: none; }
+  .school-marker { padding: 5px 7px; }
+  .age-event-cell { grid-column: 2; padding: 8px 10px 10px; }
+  .age-event-cell textarea { min-height: 72px; padding: 9px; border-color: #e0ded7; background: white; }
+  .undated-notes-card { padding: 19px 16px; }
 }
 
 @media (max-width: 520px) {

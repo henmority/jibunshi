@@ -1,144 +1,207 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-type TimelineCategory = 'home' | 'school' | 'work' | 'family' | 'meeting' | 'turning' | 'other';
+type SchoolType = 'kindergarten' | 'nursery' | 'elementary' | 'juniorHigh' | 'highSchool' | 'university' | 'graduate' | 'other';
 
-type TimelineEntry = {
+type SchoolRecord = {
   id: string;
-  year: string;
-  month: string;
-  endYear: string;
-  endMonth: string;
-  dateNote: string;
-  category: TimelineCategory;
-  title: string;
-  place: string;
-  organization: string;
-  people: string;
-  fact: string;
-  scene: string;
-  feeling: string;
-  impact: string;
+  type: SchoolType;
+  name: string;
+  startAge: string;
+  endAge: string;
 };
 
 type TimelineData = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   subjectName: string;
   birthDate: string;
+  eventsByAge: Record<string, string>;
+  schools: SchoolRecord[];
+  undatedNotes: string;
   updatedAt: string;
-  entries: TimelineEntry[];
 };
 
 type SaveState = 'saved' | 'saving' | 'failed';
 
-const STORAGE_KEY = 'jibunshi-life-timeline-v1';
+type SchoolMarker = {
+  id: string;
+  label: string;
+  stage: '入学' | '在籍' | '卒業';
+};
 
-const CATEGORY_LABELS: Record<TimelineCategory, string> = {
-  home: '暮らし・移動',
-  school: '学校・学び',
-  work: '仕事',
-  family: '家族',
-  meeting: '出会い',
-  turning: '転機',
+type AgeTimelineRowProps = {
+  age: number;
+  year: number;
+  note: string;
+  markers: SchoolMarker[];
+  isCurrent: boolean;
+  onNoteChange: (age: number, value: string) => void;
+};
+
+const STORAGE_KEY = 'jibunshi-life-timeline-v2';
+const LEGACY_STORAGE_KEY = 'jibunshi-life-timeline-v1';
+const MAX_AGE = 130;
+
+const SCHOOL_LABELS: Record<SchoolType, string> = {
+  kindergarten: '幼稚園',
+  nursery: '保育所',
+  elementary: '小学校',
+  juniorHigh: '中学校',
+  highSchool: '高校',
+  university: '大学',
+  graduate: '大学院',
   other: 'その他',
 };
 
-const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS) as [TimelineCategory, string][];
-const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => index + 1);
+const SCHOOL_DEFAULT_AGES: Record<SchoolType, [number, number]> = {
+  kindergarten: [3, 6],
+  nursery: [0, 6],
+  elementary: [6, 12],
+  juniorHigh: [12, 15],
+  highSchool: [15, 18],
+  university: [18, 22],
+  graduate: [22, 24],
+  other: [18, 20],
+};
+
+const SCHOOL_TYPES = Object.keys(SCHOOL_LABELS) as SchoolType[];
+const EMPTY_SCHOOL_MARKERS: SchoolMarker[] = [];
 
 const emptyTimeline: TimelineData = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   subjectName: '',
   birthDate: '',
-  updatedAt: '2026-09-02T00:00:00.000Z',
-  entries: [],
+  eventsByAge: {},
+  schools: [],
+  undatedNotes: '',
+  updatedAt: '2026-09-10T00:00:00.000Z',
 };
 
 function stringValue(value: unknown) {
   return typeof value === 'string' ? value : '';
 }
 
+function validAge(value: unknown) {
+  if (value === '' || value === null || value === undefined) return null;
+  const age = Number(value);
+  return Number.isInteger(age) && age >= 0 && age <= MAX_AGE ? age : null;
+}
+
 function normalizeTimeline(value: unknown): TimelineData | null {
   if (!value || typeof value !== 'object') return null;
   const data = value as Partial<TimelineData>;
-  if (!Array.isArray(data.entries)) return null;
+  if (data.schemaVersion !== 2) return null;
+
+  const eventsByAge: Record<string, string> = {};
+  if (data.eventsByAge && typeof data.eventsByAge === 'object') {
+    Object.entries(data.eventsByAge).forEach(([age, note]) => {
+      if (validAge(age) !== null && typeof note === 'string' && note.trim()) eventsByAge[age] = note;
+    });
+  }
+
+  const schools = Array.isArray(data.schools)
+    ? data.schools.flatMap((rawSchool) => {
+        if (!rawSchool || typeof rawSchool !== 'object') return [];
+        const school = rawSchool as Partial<SchoolRecord>;
+        const type = String(school.type) as SchoolType;
+        if (!Object.hasOwn(SCHOOL_LABELS, type)) return [];
+        return [{
+          id: stringValue(school.id) || crypto.randomUUID(),
+          type,
+          name: stringValue(school.name),
+          startAge: stringValue(school.startAge),
+          endAge: stringValue(school.endAge),
+        }];
+      })
+    : [];
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     subjectName: stringValue(data.subjectName),
     birthDate: stringValue(data.birthDate),
+    eventsByAge,
+    schools,
+    undatedNotes: stringValue(data.undatedNotes),
     updatedAt: stringValue(data.updatedAt),
-    entries: data.entries.flatMap((rawEntry) => {
-      if (!rawEntry || typeof rawEntry !== 'object') return [];
-      const entry = rawEntry as Partial<TimelineEntry>;
-      const category = String(entry.category) as TimelineCategory;
-      return [{
-        id: stringValue(entry.id) || crypto.randomUUID(),
-        year: stringValue(entry.year),
-        month: stringValue(entry.month),
-        endYear: stringValue(entry.endYear),
-        endMonth: stringValue(entry.endMonth),
-        dateNote: stringValue(entry.dateNote),
-        category: Object.hasOwn(CATEGORY_LABELS, category) ? category : 'other',
-        title: stringValue(entry.title) || '名称未入力の出来事',
-        place: stringValue(entry.place),
-        organization: stringValue(entry.organization),
-        people: stringValue(entry.people),
-        fact: stringValue(entry.fact),
-        scene: stringValue(entry.scene),
-        feeling: stringValue(entry.feeling),
-        impact: stringValue(entry.impact),
-      }];
-    }),
   };
 }
 
-function createEntry(): TimelineEntry {
-  return {
-    id: crypto.randomUUID(),
-    year: '',
-    month: '',
-    endYear: '',
-    endMonth: '',
-    dateNote: '',
-    category: 'turning',
-    title: '新しい出来事',
-    place: '',
-    organization: '',
-    people: '',
-    fact: '',
-    scene: '',
-    feeling: '',
-    impact: '',
-  };
-}
-
-function entrySortValue(entry: TimelineEntry) {
-  const year = Number(entry.year);
-  if (!Number.isFinite(year) || year <= 0) return Number.MAX_SAFE_INTEGER;
-  return year * 100 + (Number(entry.month) || 0);
-}
-
-function formatPeriod(entry: TimelineEntry) {
-  const start = entry.year
-    ? `${entry.year}年${entry.month ? `${Number(entry.month)}月` : ''}`
-    : '時期未入力';
-  if (!entry.endYear) return start;
-  const end = `${entry.endYear}年${entry.endMonth ? `${Number(entry.endMonth)}月` : ''}`;
-  return `${start}〜${end}`;
-}
-
-function approximateAge(birthDate: string, entry: TimelineEntry) {
-  if (!birthDate || !entry.year) return '';
+function ageAtEvent(birthDate: string, yearValue: unknown, monthValue: unknown) {
+  if (!birthDate) return null;
   const [birthYearText, birthMonthText] = birthDate.split('-');
   const birthYear = Number(birthYearText);
-  const eventYear = Number(entry.year);
-  if (!birthYear || !eventYear || eventYear < birthYear) return '';
+  const birthMonth = Number(birthMonthText);
+  const eventYear = Number(yearValue);
+  const eventMonth = Number(monthValue);
+  if (!birthYear || !eventYear || eventYear < birthYear) return null;
   let age = eventYear - birthYear;
-  if (entry.month && Number(entry.month) < Number(birthMonthText)) age -= 1;
-  return age >= 0 ? `約${age}歳` : '';
+  if (eventMonth && eventMonth < birthMonth) age -= 1;
+  return validAge(age);
+}
+
+function migrateLegacyTimeline(value: unknown): TimelineData | null {
+  if (!value || typeof value !== 'object') return null;
+  const legacy = value as { subjectName?: unknown; birthDate?: unknown; entries?: unknown };
+  if (!Array.isArray(legacy.entries)) return null;
+
+  const birthDate = stringValue(legacy.birthDate);
+  const eventsByAge: Record<string, string> = {};
+  const undated: string[] = [];
+
+  legacy.entries.forEach((rawEntry) => {
+    if (!rawEntry || typeof rawEntry !== 'object') return;
+    const entry = rawEntry as Record<string, unknown>;
+    const details = [
+      stringValue(entry.title),
+      stringValue(entry.organization),
+      stringValue(entry.place),
+      stringValue(entry.fact),
+      stringValue(entry.scene),
+      stringValue(entry.feeling),
+      stringValue(entry.impact),
+    ].filter(Boolean).join('\n');
+    if (!details) return;
+    const age = ageAtEvent(birthDate, entry.year, entry.month);
+    if (age === null) {
+      undated.push(details);
+      return;
+    }
+    eventsByAge[String(age)] = [eventsByAge[String(age)], details].filter(Boolean).join('\n\n');
+  });
+
+  return {
+    ...emptyTimeline,
+    subjectName: stringValue(legacy.subjectName),
+    birthDate,
+    eventsByAge,
+    undatedNotes: undated.join('\n\n---\n\n'),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function calculateCurrentAge(birthDate: string) {
+  const [yearText, monthText, dayText] = birthDate.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  if (!year || !month || !day) return null;
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) age -= 1;
+  return validAge(age);
+}
+
+function createSchool(type: SchoolType): SchoolRecord {
+  const [startAge, endAge] = SCHOOL_DEFAULT_AGES[type];
+  return {
+    id: crypto.randomUUID(),
+    type,
+    name: '',
+    startAge: String(startAge),
+    endAge: String(endAge),
+  };
 }
 
 function downloadTimeline(timeline: TimelineData) {
@@ -151,25 +214,55 @@ function downloadTimeline(timeline: TimelineData) {
   URL.revokeObjectURL(url);
 }
 
+const AgeTimelineRow = memo(function AgeTimelineRow({ age, year, note, markers, isCurrent, onNoteChange }: AgeTimelineRowProps) {
+  return (
+    <div className={`age-timeline-row ${isCurrent ? 'current' : ''} ${note.trim() ? 'filled' : ''}`} id={isCurrent ? 'current-age-row' : undefined}>
+      <div className="age-year-cell">
+        <strong>{age}<small>歳</small></strong>
+        <span>{year}年</span>
+        {isCurrent ? <em>現在</em> : null}
+      </div>
+      <div className="age-school-cell">
+        {markers.length ? markers.map((marker) => (
+          <span className="school-marker" key={`${marker.id}-${marker.stage}`}>
+            <b>{marker.stage}</b>{marker.label}
+          </span>
+        )) : <span className="school-empty">—</span>}
+      </div>
+      <label className="age-event-cell">
+        <span className="sr-only">{age}歳の出来事</span>
+        <textarea
+          rows={2}
+          value={note}
+          onChange={(event) => onNoteChange(age, event.target.value)}
+          placeholder={`${age}歳ごろの出来事、思い出、出会いなど`}
+        />
+      </label>
+    </div>
+  );
+});
+
 export default function TimelinePage() {
   const [timeline, setTimeline] = useState<TimelineData>(emptyTimeline);
-  const [selectedEntryId, setSelectedEntryId] = useState('');
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | TimelineCategory>('all');
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('saved');
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [schoolPickerOpen, setSchoolPickerOpen] = useState(false);
+  const [pendingSchoolTypes, setPendingSchoolTypes] = useState<SchoolType[]>([]);
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const normalized = normalizeTimeline(JSON.parse(stored));
-          if (normalized) {
-            setTimeline(normalized);
-            setSelectedEntryId(normalized.entries[0]?.id ?? '');
+        const normalized = stored ? normalizeTimeline(JSON.parse(stored)) : null;
+        if (normalized) {
+          setTimeline(normalized);
+        } else {
+          const legacyStored = localStorage.getItem(LEGACY_STORAGE_KEY);
+          const migrated = legacyStored ? migrateLegacyTimeline(JSON.parse(legacyStored)) : null;
+          if (migrated) {
+            setTimeline(migrated);
+            setNotice('以前の年表を、年齢ごとの新しい形式へ引き継ぎました。');
           }
         }
       } catch {
@@ -198,70 +291,92 @@ export default function TimelinePage() {
     };
   }, [hydrated, timeline]);
 
-  const selectedEntry = timeline.entries.find((entry) => entry.id === selectedEntryId) ?? null;
+  const birthYear = Number(timeline.birthDate.slice(0, 4)) || null;
+  const currentAge = calculateCurrentAge(timeline.birthDate);
+  const completedEventCount = Object.values(timeline.eventsByAge).filter((note) => note.trim()).length;
 
-  const visibleEntries = useMemo(() => {
-    const searchText = search.trim().toLocaleLowerCase('ja');
-    return timeline.entries
-      .filter((entry) => categoryFilter === 'all' || entry.category === categoryFilter)
-      .filter((entry) => {
-        if (!searchText) return true;
-        return [entry.title, entry.place, entry.organization, entry.people, entry.fact, entry.scene]
-          .some((value) => value.toLocaleLowerCase('ja').includes(searchText));
-      })
-      .sort((first, second) => entrySortValue(first) - entrySortValue(second));
-  }, [categoryFilter, search, timeline.entries]);
+  const maxDisplayedAge = useMemo(() => {
+    const savedAges = Object.keys(timeline.eventsByAge).map(Number).filter((age) => validAge(age) !== null);
+    const schoolAges = timeline.schools
+      .flatMap((school) => [validAge(school.startAge), validAge(school.endAge)])
+      .filter((age): age is number => age !== null);
+    return Math.min(MAX_AGE, Math.max(currentAge ?? 0, ...savedAges, ...schoolAges));
+  }, [currentAge, timeline.eventsByAge, timeline.schools]);
 
-  const yearRange = useMemo(() => {
-    const years = timeline.entries.map((entry) => Number(entry.year)).filter((year) => year > 0);
-    if (!years.length) return '—';
-    const first = Math.min(...years);
-    const last = Math.max(...years);
-    return first === last ? `${first}年` : `${first}〜${last}年`;
-  }, [timeline.entries]);
+  const schoolMarkersByAge = useMemo(() => {
+    const markers = new Map<number, SchoolMarker[]>();
+    timeline.schools.forEach((school) => {
+      const startValue = validAge(school.startAge);
+      const endValue = validAge(school.endAge);
+      if (startValue === null || endValue === null) return;
+      const startAge = Math.min(startValue, endValue);
+      const endAge = Math.max(startValue, endValue);
+      for (let age = startAge; age <= endAge; age += 1) {
+        const stage = age === startAge ? '入学' : age === endAge ? '卒業' : '在籍';
+        const marker: SchoolMarker = {
+          id: school.id,
+          label: school.name.trim() || SCHOOL_LABELS[school.type],
+          stage,
+        };
+        markers.set(age, [...(markers.get(age) ?? []), marker]);
+      }
+    });
+    return markers;
+  }, [timeline.schools]);
 
-  const storyCount = timeline.entries.filter((entry) => entry.scene.trim() || entry.feeling.trim() || entry.impact.trim()).length;
+  const ageRows = useMemo(() => Array.from({ length: maxDisplayedAge + 1 }, (_, age) => age), [maxDisplayedAge]);
+  const existingSchoolTypes = useMemo(() => new Set(timeline.schools.map((school) => school.type)), [timeline.schools]);
 
   function updateTimeline(patch: Partial<TimelineData>) {
     setTimeline((current) => ({ ...current, ...patch, updatedAt: new Date().toISOString() }));
   }
 
-  function updateEntry(patch: Partial<TimelineEntry>) {
-    if (!selectedEntry) return;
+  const updateEventNote = useCallback((age: number, value: string) => {
+    setTimeline((current) => {
+      const eventsByAge = { ...current.eventsByAge };
+      if (value) eventsByAge[String(age)] = value;
+      else delete eventsByAge[String(age)];
+      return { ...current, eventsByAge, updatedAt: new Date().toISOString() };
+    });
+  }, []);
+
+  function toggleSchoolType(type: SchoolType) {
+    setPendingSchoolTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]);
+  }
+
+  function addSelectedSchools() {
+    const typesToAdd = pendingSchoolTypes.filter((type) => !existingSchoolTypes.has(type));
+    if (!typesToAdd.length) return;
     setTimeline((current) => ({
       ...current,
+      schools: [...current.schools, ...typesToAdd.map(createSchool)],
       updatedAt: new Date().toISOString(),
-      entries: current.entries.map((entry) => entry.id === selectedEntry.id ? { ...entry, ...patch } : entry),
+    }));
+    setPendingSchoolTypes([]);
+    setSchoolPickerOpen(false);
+    setNotice('学校入力欄を追加しました。学校名と年齢を確認してください。');
+  }
+
+  function updateSchool(id: string, patch: Partial<SchoolRecord>) {
+    setTimeline((current) => ({
+      ...current,
+      schools: current.schools.map((school) => school.id === id ? { ...school, ...patch } : school),
+      updatedAt: new Date().toISOString(),
     }));
   }
 
-  function addEntry() {
-    const entry = createEntry();
+  function removeSchool(school: SchoolRecord) {
+    if (!window.confirm(`${SCHOOL_LABELS[school.type]}の入力欄を削除しますか？`)) return;
     setTimeline((current) => ({
       ...current,
+      schools: current.schools.filter((item) => item.id !== school.id),
       updatedAt: new Date().toISOString(),
-      entries: [...current.entries, entry],
     }));
-    setSelectedEntryId(entry.id);
-    setCategoryFilter('all');
-    setSearch('');
-    setNotice('新しい出来事を追加しました。まず年と見出しを入力してください。');
+    setNotice(`${SCHOOL_LABELS[school.type]}の入力欄を削除しました。`);
   }
 
-  function deleteEntry() {
-    if (!selectedEntry) return;
-    const currentIndex = timeline.entries.findIndex((entry) => entry.id === selectedEntry.id);
-    const remaining = timeline.entries.filter((entry) => entry.id !== selectedEntry.id);
-    const nextEntry = remaining[Math.min(currentIndex, remaining.length - 1)];
-    const deletedTitle = selectedEntry.title;
-    setTimeline((current) => ({
-      ...current,
-      updatedAt: new Date().toISOString(),
-      entries: current.entries.filter((entry) => entry.id !== selectedEntry.id),
-    }));
-    setSelectedEntryId(nextEntry?.id ?? '');
-    setDeleteOpen(false);
-    setNotice(`「${deletedTitle}」を年表から削除しました。`);
+  function scrollToCurrentAge() {
+    document.getElementById('current-age-row')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   return (
@@ -284,11 +399,11 @@ export default function TimelinePage() {
         </div>
       </header>
 
-      <section className="timeline-hero">
+      <section className="timeline-hero age-timeline-hero">
         <div>
           <p className="label">LIFE TIMELINE</p>
-          <h1>出来事を並べて、人生の流れを見つける</h1>
-          <p>年だけでも登録できます。事実を先に置き、思い出せる出来事から場面や気持ちを足してください。</p>
+          <h1>年齢に沿って、人生を思い出す</h1>
+          <p>生年月日から年齢と西暦を並べます。覚えているところから、右側の欄へ出来事を入力してください。</p>
         </div>
         <div className="timeline-profile">
           <label><span>お名前</span><input value={timeline.subjectName} onChange={(event) => updateTimeline({ subjectName: event.target.value })} placeholder="人生史を書く人の名前" /></label>
@@ -296,118 +411,118 @@ export default function TimelinePage() {
         </div>
       </section>
 
-      <section className="timeline-stats" aria-label="年表の概要">
-        <div><strong>{timeline.entries.length}</strong><span>登録した出来事</span></div>
-        <div><strong>{yearRange}</strong><span>年表の範囲</span></div>
-        <div><strong>{storyCount}</strong><span>ストーリー記入済み</span></div>
-        <p>この年表は設問セットとは別に、このブラウザへ自動保存されます。</p>
-      </section>
+      <div className="age-timeline-main">
+        <section className="timeline-summary" aria-label="年表の概要">
+          <div><span>現在の年齢</span><strong>{currentAge === null ? '—' : `${currentAge}歳`}</strong></div>
+          <div><span>出来事を記入</span><strong>{completedEventCount}<small>件</small></strong></div>
+          <div><span>学校欄</span><strong>{timeline.schools.length}<small>件</small></strong></div>
+          <p>入力内容は、このブラウザへ自動保存されます。</p>
+        </section>
 
-      <div className="timeline-workspace">
-        <section className="timeline-list-panel">
-          <div className="timeline-toolbar">
+        <section className="school-history-card">
+          <div className="school-history-heading">
             <div>
-              <p className="label">CHRONOLOGY</p>
-              <h2>人生の出来事</h2>
+              <p className="label">SCHOOL HISTORY</p>
+              <h2>学校歴</h2>
+              <p>通った学校だけを選び、学校名と当時の年齢を入力します。</p>
             </div>
-            <button className="button primary" onClick={addEntry}>＋ 出来事を追加</button>
-          </div>
-          <div className="timeline-filters">
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="場所・人物・出来事を検索" aria-label="年表を検索" />
-            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as 'all' | TimelineCategory)} aria-label="分類で絞り込む">
-              <option value="all">すべての分類</option>
-              {CATEGORY_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
+            <button
+              className="button primary"
+              aria-expanded={schoolPickerOpen}
+              aria-controls="school-picker"
+              onClick={() => setSchoolPickerOpen((open) => !open)}
+            >
+              {schoolPickerOpen ? '学校選択を閉じる' : '＋ 学校入力欄を表示'}
+            </button>
           </div>
 
-          {visibleEntries.length ? (
-            <div className="timeline-list">
-              {visibleEntries.map((entry) => {
-                const age = approximateAge(timeline.birthDate, entry);
-                return (
-                  <article className={`timeline-entry-card ${entry.id === selectedEntryId ? 'selected' : ''}`} key={entry.id}>
-                    <div className="timeline-point" aria-hidden="true"><i /></div>
-                    <button onClick={() => setSelectedEntryId(entry.id)}>
-                      <div className="timeline-entry-period"><strong>{formatPeriod(entry)}</strong>{age && <span>{age}</span>}</div>
-                      <div className="timeline-entry-copy">
-                        <span className={`timeline-category ${entry.category}`}>{CATEGORY_LABELS[entry.category]}</span>
-                        <h3>{entry.title}</h3>
-                        {(entry.place || entry.organization) && <p>{[entry.place, entry.organization].filter(Boolean).join('・')}</p>}
-                        {entry.fact && <p className="timeline-fact-preview">{entry.fact}</p>}
-                      </div>
-                    </button>
-                  </article>
-                );
-              })}
+          {schoolPickerOpen ? (
+            <div className="school-picker" id="school-picker">
+              <div className="school-checkboxes">
+                {SCHOOL_TYPES.map((type) => {
+                  const added = existingSchoolTypes.has(type);
+                  return (
+                    <label className={added ? 'added' : ''} key={type}>
+                      <input
+                        type="checkbox"
+                        checked={added || pendingSchoolTypes.includes(type)}
+                        disabled={added}
+                        onChange={() => toggleSchoolType(type)}
+                      />
+                      <span><strong>{SCHOOL_LABELS[type]}</strong><small>{added ? '追加済み' : `目安 ${SCHOOL_DEFAULT_AGES[type][0]}〜${SCHOOL_DEFAULT_AGES[type][1]}歳`}</small></span>
+                    </label>
+                  );
+                })}
+              </div>
+              <div className="school-picker-actions">
+                <p>年齢は追加後に自由に変更できます。</p>
+                <button className="button primary" disabled={!pendingSchoolTypes.length} onClick={addSelectedSchools}>選んだ学校欄を追加</button>
+              </div>
+            </div>
+          ) : null}
+
+          {timeline.schools.length ? (
+            <div className="school-record-list">
+              {timeline.schools.map((school) => (
+                <article className="school-record" key={school.id}>
+                  <div className="school-record-title">
+                    <span>{SCHOOL_LABELS[school.type]}</span>
+                    <button onClick={() => removeSchool(school)} aria-label={`${SCHOOL_LABELS[school.type]}の入力欄を削除`}>欄を削除</button>
+                  </div>
+                  <label className="school-name-field"><span>学校名</span><input value={school.name} onChange={(event) => updateSchool(school.id, { name: event.target.value })} placeholder={`例：〇〇${SCHOOL_LABELS[school.type]}`} /></label>
+                  <div className="school-age-fields">
+                    <label><span>入学・入所年齢</span><div><input type="number" min="0" max={MAX_AGE} inputMode="numeric" value={school.startAge} onChange={(event) => updateSchool(school.id, { startAge: event.target.value })} /><b>歳</b></div></label>
+                    <span aria-hidden="true">〜</span>
+                    <label><span>卒業・退所年齢</span><div><input type="number" min="0" max={MAX_AGE} inputMode="numeric" value={school.endAge} onChange={(event) => updateSchool(school.id, { endAge: event.target.value })} /><b>歳</b></div></label>
+                  </div>
+                  <p>自動入力された年齢は、実際に通った時期に合わせて修正できます。</p>
+                </article>
+              ))}
             </div>
           ) : (
-            <div className="timeline-empty">
-              <span aria-hidden="true">＋</span>
-              <h3>{timeline.entries.length ? '条件に合う出来事がありません' : '最初の出来事を登録しましょう'}</h3>
-              <p>{timeline.entries.length ? '検索や分類を変更してください。' : '生まれた年、入学、就職、引っ越しなど、年月が分かる出来事から始められます。'}</p>
-              {!timeline.entries.length && <button className="button primary" onClick={addEntry}>出来事を追加</button>}
+            <div className="school-record-empty">「学校入力欄を表示」から、通った学校の種類を選んでください。</div>
+          )}
+        </section>
+
+        <section className="age-timeline-card">
+          <div className="age-timeline-heading">
+            <div><p className="label">CHRONOLOGY</p><h2>年齢ごとの出来事</h2></div>
+            {currentAge !== null ? <button className="button secondary" onClick={scrollToCurrentAge}>現在の年齢へ移動</button> : null}
+          </div>
+
+          {birthYear === null ? (
+            <div className="age-timeline-empty">
+              <span aria-hidden="true">年</span>
+              <h3>生年月日を入力してください</h3>
+              <p>入力すると、0歳から現在までの年齢と西暦が自動で表示されます。</p>
+            </div>
+          ) : (
+            <div className="age-timeline-table">
+              <div className="age-timeline-head" aria-hidden="true"><span>年齢・西暦</span><span>学校</span><span>出来事・思い出</span></div>
+              {ageRows.map((age) => (
+                <AgeTimelineRow
+                  age={age}
+                  year={birthYear + age}
+                  note={timeline.eventsByAge[String(age)] ?? ''}
+                  markers={schoolMarkersByAge.get(age) ?? EMPTY_SCHOOL_MARKERS}
+                  isCurrent={age === currentAge}
+                  key={age}
+                  onNoteChange={updateEventNote}
+                />
+              ))}
             </div>
           )}
         </section>
 
-        <aside className={`timeline-editor ${selectedEntry ? 'open' : ''}`}>
-          {selectedEntry ? (
-            <>
-              <div className="timeline-editor-heading">
-                <div><p className="label">EDIT EVENT</p><h2>出来事を編集</h2></div>
-                <div className="timeline-editor-heading-actions">
-                  <button className="timeline-editor-close" onClick={() => setSelectedEntryId('')} aria-label="年表に戻る">×</button>
-                  <button className="timeline-delete-icon" onClick={() => setDeleteOpen(true)} aria-label="この出来事を削除">⌫</button>
-                </div>
-              </div>
-              <div className="timeline-editor-scroll">
-                <div className="timeline-form-section">
-                  <h3><span>1</span>いつ・どこで</h3>
-                  <div className="timeline-date-grid">
-                    <label><span>開始年</span><input type="number" inputMode="numeric" min="1800" max="2200" value={selectedEntry.year} onChange={(event) => updateEntry({ year: event.target.value })} placeholder="例：1985" /></label>
-                    <label><span>月（任意）</span><select value={selectedEntry.month} onChange={(event) => updateEntry({ month: event.target.value })}><option value="">不明</option>{MONTH_OPTIONS.map((month) => <option key={month} value={String(month)}>{month}月</option>)}</select></label>
-                    <label><span>終了年（任意）</span><input type="number" inputMode="numeric" min="1800" max="2200" value={selectedEntry.endYear} onChange={(event) => updateEntry({ endYear: event.target.value })} /></label>
-                    <label><span>終了月（任意）</span><select value={selectedEntry.endMonth} onChange={(event) => updateEntry({ endMonth: event.target.value })}><option value="">不明</option>{MONTH_OPTIONS.map((month) => <option key={month} value={String(month)}>{month}月</option>)}</select></label>
-                  </div>
-                  <label><span>時期の補足</span><input value={selectedEntry.dateNote} onChange={(event) => updateEntry({ dateNote: event.target.value })} placeholder="例：小学3年生の夏、昭和の終わりごろ" /></label>
-                  <label><span>分類</span><select value={selectedEntry.category} onChange={(event) => updateEntry({ category: event.target.value as TimelineCategory })}>{CATEGORY_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-                </div>
-
-                <div className="timeline-form-section">
-                  <h3><span>2</span>事実を記録</h3>
-                  <label><span>出来事の見出し</span><input value={selectedEntry.title} onChange={(event) => updateEntry({ title: event.target.value })} placeholder="例：〇〇株式会社へ入社" /></label>
-                  <label><span>場所</span><input value={selectedEntry.place} onChange={(event) => updateEntry({ place: event.target.value })} placeholder="市区町村、建物、住所など" /></label>
-                  <label><span>学校・会社・団体名</span><input value={selectedEntry.organization} onChange={(event) => updateEntry({ organization: event.target.value })} placeholder="固有名詞を正式名称で入力" /></label>
-                  <label><span>関わった人</span><input value={selectedEntry.people} onChange={(event) => updateEntry({ people: event.target.value })} placeholder="名前やご自身との関係" /></label>
-                  <label><span>何が起きたか</span><textarea rows={4} value={selectedEntry.fact} onChange={(event) => updateEntry({ fact: event.target.value })} placeholder="まず事実だけを、起きた順に書いてください。" /></label>
-                </div>
-
-                <div className="timeline-form-section story">
-                  <h3><span>3</span>ストーリーを残す <small>すべて任意</small></h3>
-                  <label><span>目に浮かぶ場面・会話</span><textarea rows={4} value={selectedEntry.scene} onChange={(event) => updateEntry({ scene: event.target.value })} placeholder="その場の景色、音、誰かが言った言葉など" /></label>
-                  <label><span>そのときの気持ち</span><textarea rows={3} value={selectedEntry.feeling} onChange={(event) => updateEntry({ feeling: event.target.value })} placeholder="当時の言葉で、短くても構いません。" /></label>
-                  <label><span>その後に変わったこと</span><textarea rows={3} value={selectedEntry.impact} onChange={(event) => updateEntry({ impact: event.target.value })} placeholder="暮らし、考え方、人との関係など。なければ空欄で構いません。" /></label>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="timeline-editor-empty"><span aria-hidden="true">年</span><h3>出来事を選択してください</h3><p>左の年表から選ぶか、新しい出来事を追加すると編集できます。</p></div>
-          )}
-        </aside>
+        {timeline.undatedNotes ? (
+          <section className="undated-notes-card">
+            <div><p className="label">UNPLACED NOTES</p><h2>時期が決まっていない以前のメモ</h2></div>
+            <textarea rows={6} value={timeline.undatedNotes} onChange={(event) => updateTimeline({ undatedNotes: event.target.value })} />
+          </section>
+        ) : null}
       </div>
 
-      {notice && <div className="toast success" role="status"><span>✓</span>{notice}<button onClick={() => setNotice('')} aria-label="通知を閉じる">×</button></div>}
-
-      {deleteOpen && selectedEntry && (
-        <div className="modal-layer" role="dialog" aria-modal="true" aria-label="出来事の削除確認">
-          <div className="utility-modal delete-modal">
-            <div className="utility-heading"><div><p className="label">DELETE EVENT</p><h2>この出来事を削除しますか？</h2></div><button className="modal-close" onClick={() => setDeleteOpen(false)} aria-label="削除確認を閉じる">×</button></div>
-            <p className="delete-question-text">{formatPeriod(selectedEntry)}　{selectedEntry.title}</p>
-            <p className="utility-lead">年表から完全に削除されます。この操作は取り消せません。</p>
-            <div className="delete-modal-actions"><button className="button secondary" onClick={() => setDeleteOpen(false)}>キャンセル</button><button className="button destructive" onClick={deleteEntry}>出来事を削除する</button></div>
-          </div>
-        </div>
-      )}
+      {notice ? <div className="toast success" role="status"><span>✓</span>{notice}<button onClick={() => setNotice('')} aria-label="通知を閉じる">×</button></div> : null}
     </main>
   );
 }
