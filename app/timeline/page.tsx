@@ -13,12 +13,30 @@ type SchoolRecord = {
   endAge: string;
 };
 
+type EpisodeTopic = 'school' | 'family' | 'friends' | 'home' | 'work' | 'health' | 'interest' | 'challenge' | 'other';
+
+type Episode = {
+  id: string;
+  age: number;
+  topic: EpisodeTopic;
+  title: string;
+  whenWhere: string;
+  people: string;
+  whatHappened: string;
+  scene: string;
+  feeling: string;
+  reflection: string;
+  impact: string;
+  createdAt: string;
+};
+
 type TimelineData = {
-  schemaVersion: 2;
+  schemaVersion: 3;
   subjectName: string;
   birthDate: string;
   eventsByAge: Record<string, string>;
   schools: SchoolRecord[];
+  episodes: Episode[];
   undatedNotes: string;
   updatedAt: string;
 };
@@ -37,11 +55,15 @@ type AgeTimelineRowProps = {
   period: string;
   note: string;
   markers: SchoolMarker[];
+  episodes: Episode[];
   isCurrent: boolean;
   onNoteChange: (age: number, value: string) => void;
+  onChooseTopic: (age: number) => void;
+  onSelectEpisode: (episodeId: string) => void;
 };
 
-const STORAGE_KEY = 'jibunshi-life-timeline-v2';
+const STORAGE_KEY = 'jibunshi-life-timeline-v3';
+const PREVIOUS_STORAGE_KEY = 'jibunshi-life-timeline-v2';
 const LEGACY_STORAGE_KEY = 'jibunshi-life-timeline-v1';
 const MAX_AGE = 130;
 
@@ -69,13 +91,29 @@ const SCHOOL_DEFAULT_AGES: Record<SchoolType, [number, number]> = {
 
 const SCHOOL_TYPES = Object.keys(SCHOOL_LABELS) as SchoolType[];
 const EMPTY_SCHOOL_MARKERS: SchoolMarker[] = [];
+const EMPTY_EPISODES: Episode[] = [];
+
+const TOPIC_DEFINITIONS: Record<EpisodeTopic, { label: string; icon: string; hint: string; prompt: string }> = {
+  school: { label: '学校・学び', icon: '学', hint: '先生、授業、行事、進路', prompt: '先生や授業、学校行事、進路など、心に残っている出来事は何ですか？' },
+  family: { label: '家族', icon: '家', hint: '両親、きょうだい、親戚', prompt: '家族との時間で、今も覚えている場面や言葉は何ですか？' },
+  friends: { label: '友人・出会い', icon: '友', hint: '友達、恩人、別れ', prompt: 'その人とどのように出会い、どんな出来事を一緒に経験しましたか？' },
+  home: { label: '暮らし・場所', icon: '暮', hint: '家、町、引っ越し、日常', prompt: '当時の家や町、毎日の暮らしで、よく覚えていることは何ですか？' },
+  work: { label: '仕事', icon: '仕', hint: '就職、職場、役割、成果', prompt: '仕事で任されたこと、苦労したこと、誇りに思ったことは何ですか？' },
+  health: { label: '健康・病気', icon: '健', hint: '体調、療養、回復、支え', prompt: '体や心の変化と、その時に支えになった人や出来事を教えてください。' },
+  interest: { label: '趣味・夢', icon: '好', hint: '好きなこと、習い事、目標', prompt: '夢中になったことは何で、どのように始まりましたか？' },
+  challenge: { label: '挑戦・転機', icon: '転', hint: '決断、成功、失敗、変化', prompt: '何を決め、何が変わりましたか？決断のきっかけも思い出してください。' },
+  other: { label: 'その他', icon: '他', hint: '自由な話題', prompt: 'この年齢を語るうえで欠かせない出来事を、自由に記録してください。' },
+};
+
+const TOPIC_TYPES = Object.keys(TOPIC_DEFINITIONS) as EpisodeTopic[];
 
 const emptyTimeline: TimelineData = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   subjectName: '',
   birthDate: '',
   eventsByAge: {},
   schools: [],
+  episodes: [],
   undatedNotes: '',
   updatedAt: '2026-09-10T00:00:00.000Z',
 };
@@ -93,7 +131,7 @@ function validAge(value: unknown) {
 function normalizeTimeline(value: unknown): TimelineData | null {
   if (!value || typeof value !== 'object') return null;
   const data = value as Partial<TimelineData>;
-  if (data.schemaVersion !== 2) return null;
+  if (data.schemaVersion !== 3) return null;
 
   const eventsByAge: Record<string, string> = {};
   if (data.eventsByAge && typeof data.eventsByAge === 'object') {
@@ -118,15 +156,47 @@ function normalizeTimeline(value: unknown): TimelineData | null {
       })
     : [];
 
+  const episodes = Array.isArray(data.episodes)
+    ? data.episodes.flatMap((rawEpisode) => {
+        if (!rawEpisode || typeof rawEpisode !== 'object') return [];
+        const episode = rawEpisode as Partial<Episode>;
+        const age = validAge(episode.age);
+        const topic = String(episode.topic) as EpisodeTopic;
+        if (age === null || !Object.hasOwn(TOPIC_DEFINITIONS, topic)) return [];
+        return [{
+          id: stringValue(episode.id) || crypto.randomUUID(),
+          age,
+          topic,
+          title: stringValue(episode.title),
+          whenWhere: stringValue(episode.whenWhere),
+          people: stringValue(episode.people),
+          whatHappened: stringValue(episode.whatHappened),
+          scene: stringValue(episode.scene),
+          feeling: stringValue(episode.feeling),
+          reflection: stringValue(episode.reflection),
+          impact: stringValue(episode.impact),
+          createdAt: stringValue(episode.createdAt),
+        }];
+      })
+    : [];
+
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     subjectName: stringValue(data.subjectName),
     birthDate: stringValue(data.birthDate),
     eventsByAge,
     schools,
+    episodes,
     undatedNotes: stringValue(data.undatedNotes),
     updatedAt: stringValue(data.updatedAt),
   };
+}
+
+function migratePreviousTimeline(value: unknown): TimelineData | null {
+  if (!value || typeof value !== 'object') return null;
+  const previous = value as Record<string, unknown>;
+  if (previous.schemaVersion !== 2) return null;
+  return normalizeTimeline({ ...previous, schemaVersion: 3, episodes: [] });
 }
 
 function ageAtEvent(birthDate: string, yearValue: unknown, monthValue: unknown) {
@@ -238,6 +308,32 @@ function createSchool(type: SchoolType): SchoolRecord {
   };
 }
 
+function createEpisode(age: number, topic: EpisodeTopic): Episode {
+  return {
+    id: crypto.randomUUID(),
+    age,
+    topic,
+    title: '',
+    whenWhere: '',
+    people: '',
+    whatHappened: '',
+    scene: '',
+    feeling: '',
+    reflection: '',
+    impact: '',
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function episodeHeading(episode: Episode) {
+  if (episode.title.trim()) return episode.title;
+  if (episode.whatHappened.trim()) {
+    const summary = episode.whatHappened.trim();
+    return summary.length > 34 ? `${summary.slice(0, 34)}…` : summary;
+  }
+  return `${TOPIC_DEFINITIONS[episode.topic].label}のエピソード`;
+}
+
 function downloadTimeline(timeline: TimelineData) {
   const blob = new Blob([JSON.stringify(timeline, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -248,9 +344,9 @@ function downloadTimeline(timeline: TimelineData) {
   URL.revokeObjectURL(url);
 }
 
-const AgeTimelineRow = memo(function AgeTimelineRow({ age, period, note, markers, isCurrent, onNoteChange }: AgeTimelineRowProps) {
+const AgeTimelineRow = memo(function AgeTimelineRow({ age, period, note, markers, episodes, isCurrent, onNoteChange, onChooseTopic, onSelectEpisode }: AgeTimelineRowProps) {
   return (
-    <div className={`age-timeline-row ${isCurrent ? 'current' : ''} ${note.trim() ? 'filled' : ''}`} id={isCurrent ? 'current-age-row' : undefined}>
+    <div className={`age-timeline-row ${isCurrent ? 'current' : ''} ${note.trim() || episodes.length ? 'filled' : ''}`} id={isCurrent ? 'current-age-row' : undefined}>
       <div className="age-year-cell">
         <strong>{age}<small>歳</small></strong>
         <span>{period}</span>
@@ -263,15 +359,31 @@ const AgeTimelineRow = memo(function AgeTimelineRow({ age, period, note, markers
           </span>
         )) : <span className="school-empty">—</span>}
       </div>
-      <label className="age-event-cell">
-        <span className="sr-only">{age}歳の出来事</span>
-        <textarea
-          rows={2}
-          value={note}
-          onChange={(event) => onNoteChange(age, event.target.value)}
-          placeholder={`${age}歳ごろの出来事、思い出、出会いなど`}
-        />
-      </label>
+      <div className="age-event-cell">
+        <label className="age-note-field">
+          <span className="sr-only">{age}歳の出来事</span>
+          <textarea
+            rows={2}
+            value={note}
+            onChange={(event) => onNoteChange(age, event.target.value)}
+            placeholder={`${age}歳ごろの出来事を、短いメモで残せます`}
+          />
+        </label>
+        {episodes.length ? (
+          <div className="age-episode-list" aria-label={`${age}歳の深掘りエピソード`}>
+            {episodes.map((episode) => {
+              const topic = TOPIC_DEFINITIONS[episode.topic];
+              return (
+                <button key={episode.id} onClick={() => onSelectEpisode(episode.id)}>
+                  <span className={`episode-topic-badge ${episode.topic}`}><i>{topic.icon}</i>{topic.label}</span>
+                  <strong>{episodeHeading(episode)}</strong><b aria-hidden="true">›</b>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        <button className="choose-topic-button" onClick={() => onChooseTopic(age)}>＋ 話題を選んで深掘りする</button>
+      </div>
     </div>
   );
 });
@@ -282,6 +394,8 @@ export default function TimelinePage() {
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [schoolPickerOpen, setSchoolPickerOpen] = useState(false);
   const [pendingSchoolTypes, setPendingSchoolTypes] = useState<SchoolType[]>([]);
+  const [topicPickerAge, setTopicPickerAge] = useState<number | null>(null);
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState('');
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
@@ -292,11 +406,18 @@ export default function TimelinePage() {
         if (normalized) {
           setTimeline(normalized);
         } else {
-          const legacyStored = localStorage.getItem(LEGACY_STORAGE_KEY);
-          const migrated = legacyStored ? migrateLegacyTimeline(JSON.parse(legacyStored)) : null;
-          if (migrated) {
-            setTimeline(migrated);
-            setNotice('以前の年表を、年齢ごとの新しい形式へ引き継ぎました。');
+          const previousStored = localStorage.getItem(PREVIOUS_STORAGE_KEY);
+          const previous = previousStored ? migratePreviousTimeline(JSON.parse(previousStored)) : null;
+          if (previous) {
+            setTimeline(previous);
+            setNotice('保存済みの年表へ、エピソードの深掘り機能を追加しました。');
+          } else {
+            const legacyStored = localStorage.getItem(LEGACY_STORAGE_KEY);
+            const migrated = legacyStored ? migrateLegacyTimeline(JSON.parse(legacyStored)) : null;
+            if (migrated) {
+              setTimeline(migrated);
+              setNotice('以前の年表を、年齢ごとの新しい形式へ引き継ぎました。');
+            }
           }
         }
       } catch {
@@ -328,14 +449,17 @@ export default function TimelinePage() {
   const birthYear = Number(timeline.birthDate.slice(0, 4)) || null;
   const currentAge = calculateCurrentAge(timeline.birthDate);
   const completedEventCount = Object.values(timeline.eventsByAge).filter((note) => note.trim()).length;
+  const selectedEpisode = timeline.episodes.find((episode) => episode.id === selectedEpisodeId) ?? null;
+  const selectedEpisodeTopic = selectedEpisode ? TOPIC_DEFINITIONS[selectedEpisode.topic] : null;
 
   const maxDisplayedAge = useMemo(() => {
     const savedAges = Object.keys(timeline.eventsByAge).map(Number).filter((age) => validAge(age) !== null);
     const schoolAges = timeline.schools
       .flatMap((school) => [validAge(school.startAge), validAge(school.endAge)])
       .filter((age): age is number => age !== null);
-    return Math.min(MAX_AGE, Math.max(currentAge ?? 0, ...savedAges, ...schoolAges));
-  }, [currentAge, timeline.eventsByAge, timeline.schools]);
+    const episodeAges = timeline.episodes.map((episode) => episode.age);
+    return Math.min(MAX_AGE, Math.max(currentAge ?? 0, ...savedAges, ...schoolAges, ...episodeAges));
+  }, [currentAge, timeline.episodes, timeline.eventsByAge, timeline.schools]);
 
   const schoolMarkersByAge = useMemo(() => {
     const markers = new Map<number, SchoolMarker[]>();
@@ -366,6 +490,13 @@ export default function TimelinePage() {
 
   const ageRows = useMemo(() => Array.from({ length: maxDisplayedAge + 1 }, (_, age) => age), [maxDisplayedAge]);
   const existingSchoolTypes = useMemo(() => new Set(timeline.schools.map((school) => school.type)), [timeline.schools]);
+  const episodesByAge = useMemo(() => {
+    const episodes = new Map<number, Episode[]>();
+    timeline.episodes.forEach((episode) => {
+      episodes.set(episode.age, [...(episodes.get(episode.age) ?? []), episode]);
+    });
+    return episodes;
+  }, [timeline.episodes]);
 
   function updateTimeline(patch: Partial<TimelineData>) {
     setTimeline((current) => ({ ...current, ...patch, updatedAt: new Date().toISOString() }));
@@ -379,6 +510,47 @@ export default function TimelinePage() {
       return { ...current, eventsByAge, updatedAt: new Date().toISOString() };
     });
   }, []);
+
+  const openTopicPicker = useCallback((age: number) => {
+    setTopicPickerAge(age);
+  }, []);
+
+  const openEpisode = useCallback((episodeId: string) => {
+    setSelectedEpisodeId(episodeId);
+  }, []);
+
+  function addEpisode(topic: EpisodeTopic) {
+    if (topicPickerAge === null) return;
+    const episode = createEpisode(topicPickerAge, topic);
+    setTimeline((current) => ({
+      ...current,
+      episodes: [...current.episodes, episode],
+      updatedAt: new Date().toISOString(),
+    }));
+    setTopicPickerAge(null);
+    setSelectedEpisodeId(episode.id);
+  }
+
+  function updateEpisode(patch: Partial<Episode>) {
+    if (!selectedEpisode) return;
+    setTimeline((current) => ({
+      ...current,
+      episodes: current.episodes.map((episode) => episode.id === selectedEpisode.id ? { ...episode, ...patch } : episode),
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
+  function removeEpisode() {
+    if (!selectedEpisode) return;
+    if (!window.confirm(`「${episodeHeading(selectedEpisode)}」を削除しますか？`)) return;
+    setTimeline((current) => ({
+      ...current,
+      episodes: current.episodes.filter((episode) => episode.id !== selectedEpisode.id),
+      updatedAt: new Date().toISOString(),
+    }));
+    setSelectedEpisodeId('');
+    setNotice('エピソードを削除しました。');
+  }
 
   function toggleSchoolType(type: SchoolType) {
     setPendingSchoolTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]);
@@ -454,7 +626,8 @@ export default function TimelinePage() {
       <div className="age-timeline-main">
         <section className="timeline-summary" aria-label="年表の概要">
           <div><span>現在の年齢</span><strong>{currentAge === null ? '—' : `${currentAge}歳`}</strong></div>
-          <div><span>出来事を記入</span><strong>{completedEventCount}<small>件</small></strong></div>
+          <div><span>年齢メモ</span><strong>{completedEventCount}<small>件</small></strong></div>
+          <div><span>深掘りエピソード</span><strong>{timeline.episodes.length}<small>件</small></strong></div>
           <div><span>学校欄</span><strong>{timeline.schools.length}<small>件</small></strong></div>
           <p>入力内容は、このブラウザへ自動保存されます。</p>
         </section>
@@ -546,9 +719,12 @@ export default function TimelinePage() {
                   period={formatAgePeriod(timeline.birthDate, age)}
                   note={timeline.eventsByAge[String(age)] ?? ''}
                   markers={schoolMarkersByAge.get(age) ?? EMPTY_SCHOOL_MARKERS}
+                  episodes={episodesByAge.get(age) ?? EMPTY_EPISODES}
                   isCurrent={age === currentAge}
                   key={age}
                   onNoteChange={updateEventNote}
+                  onChooseTopic={openTopicPicker}
+                  onSelectEpisode={openEpisode}
                 />
               ))}
             </div>
@@ -562,6 +738,81 @@ export default function TimelinePage() {
           </section>
         ) : null}
       </div>
+
+      {topicPickerAge !== null ? (
+        <div className="modal-layer" role="dialog" aria-modal="true" aria-labelledby="topic-picker-title">
+          <div className="topic-picker-modal">
+            <div className="utility-heading">
+              <div>
+                <p className="label">CHOOSE A TOPIC</p>
+                <h2 id="topic-picker-title">{topicPickerAge}歳の話題を選ぶ</h2>
+              </div>
+              <button className="modal-close" onClick={() => setTopicPickerAge(null)} aria-label="話題選択を閉じる">×</button>
+            </div>
+            <p className="topic-picker-lead">具体的に思い出したい話題をタップしてください。選ぶと、個別のエピソードを深掘りする画面が開きます。</p>
+            <div className="episode-topic-grid">
+              {TOPIC_TYPES.map((topic) => {
+                const definition = TOPIC_DEFINITIONS[topic];
+                return (
+                  <button key={topic} onClick={() => addEpisode(topic)}>
+                    <span className={`topic-icon ${topic}`}>{definition.icon}</span>
+                    <strong>{definition.label}</strong>
+                    <small>{definition.hint}</small>
+                    <b aria-hidden="true">›</b>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {selectedEpisode && selectedEpisodeTopic ? (
+        <div className="modal-layer episode-modal-layer" role="dialog" aria-modal="true" aria-labelledby="episode-editor-title">
+          <div className="episode-editor-modal">
+            <div className="episode-editor-header">
+              <div>
+                <p className="label">DEEPEN THE STORY</p>
+                <h2 id="episode-editor-title">{selectedEpisode.age}歳のエピソード</h2>
+                <span>{formatAgePeriod(timeline.birthDate, selectedEpisode.age)}</span>
+              </div>
+              <button className="modal-close" onClick={() => setSelectedEpisodeId('')} aria-label="エピソード編集を閉じる">×</button>
+            </div>
+            <div className="episode-editor-scroll">
+              <div className="episode-guide">
+                <span className={`topic-icon ${selectedEpisode.topic}`}>{selectedEpisodeTopic.icon}</span>
+                <div><strong>{selectedEpisodeTopic.label}</strong><p>{selectedEpisodeTopic.prompt}</p></div>
+              </div>
+
+              <div className="episode-form-section">
+                <div className="episode-section-title"><span>1</span><div><strong>出来事を特定する</strong><small>まず、誰とどこで何があったかを整理します</small></div></div>
+                <label><span>エピソードの見出し</span><input value={selectedEpisode.title} onChange={(event) => updateEpisode({ title: event.target.value })} placeholder="例：運動会で初めてリレーの選手になった" /></label>
+                <div className="episode-field-grid">
+                  <label><span>いつ・どこで</span><input value={selectedEpisode.whenWhere} onChange={(event) => updateEpisode({ whenWhere: event.target.value })} placeholder="季節、学年、場所など" /></label>
+                  <label><span>一緒にいた人</span><input value={selectedEpisode.people} onChange={(event) => updateEpisode({ people: event.target.value })} placeholder="名前やご自身との関係" /></label>
+                </div>
+                <label><span>何が起きましたか？</span><textarea rows={5} value={selectedEpisode.whatHappened} onChange={(event) => updateEpisode({ whatHappened: event.target.value })} placeholder="出来事を、起きた順番に沿って書いてください。" /></label>
+              </div>
+
+              <div className="episode-form-section">
+                <div className="episode-section-title"><span>2</span><div><strong>その場面を思い出す</strong><small>人柄が伝わる具体的な記憶を残します</small></div></div>
+                <label><span>目に浮かぶ場面や言葉</span><textarea rows={4} value={selectedEpisode.scene} onChange={(event) => updateEpisode({ scene: event.target.value })} placeholder="景色、音、表情、誰かが言った言葉など" /></label>
+                <label><span>そのとき、どう感じましたか？</span><textarea rows={3} value={selectedEpisode.feeling} onChange={(event) => updateEpisode({ feeling: event.target.value })} placeholder="うれしい、悔しい、怖い、ほっとした、など当時の気持ち" /></label>
+              </div>
+
+              <div className="episode-form-section reflection">
+                <div className="episode-section-title"><span>3</span><div><strong>人生の中での意味を考える</strong><small>今の自分につながる部分を見つけます</small></div></div>
+                <label><span>今振り返ると、どう思いますか？</span><textarea rows={3} value={selectedEpisode.reflection} onChange={(event) => updateEpisode({ reflection: event.target.value })} placeholder="当時は分からなかったこと、今だから思うこと" /></label>
+                <label><span>その後に影響したこと</span><textarea rows={3} value={selectedEpisode.impact} onChange={(event) => updateEpisode({ impact: event.target.value })} placeholder="考え方、進路、人との関わり、今も続く習慣など" /></label>
+              </div>
+            </div>
+            <div className="episode-editor-footer">
+              <button className="button danger" onClick={removeEpisode}>このエピソードを削除</button>
+              <div><span className={`save-state ${saveState}`}><i />{saveState === 'saved' ? '保存済み' : saveState === 'saving' ? '保存中…' : '保存失敗'}</span><button className="button primary" onClick={() => setSelectedEpisodeId('')}>年表に戻る</button></div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {notice ? <div className="toast success" role="status"><span>✓</span>{notice}<button onClick={() => setNotice('')} aria-label="通知を閉じる">×</button></div> : null}
     </main>

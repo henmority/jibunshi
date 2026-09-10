@@ -405,7 +405,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   display: flex; flex-direction: column; gap: 20px;
 }
 .timeline-summary {
-  display: grid; grid-template-columns: 155px 155px 155px 1fr;
+  display: grid; grid-template-columns: repeat(4, 150px) 1fr;
   border: 1px solid var(--line); border-radius: 12px; background: var(--paper); overflow: hidden;
 }
 .timeline-summary > div {
@@ -492,7 +492,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .school-marker > small { flex-basis: 100%; color: #607785; font-size: 8px; font-weight: 800; }
 .school-marker b { padding: 2px 4px; border-radius: 3px; background: white; color: #71838d; font-size: 7px; }
 .school-empty { color: #bbbcb6; }
-.age-event-cell { display: flex; align-items: center; padding: 12px 15px; border-left: 1px solid #e5e2da; }
+.age-event-cell { display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 8px; padding: 12px 15px; border-left: 1px solid #e5e2da; }
+.age-note-field { display: block; }
 .age-event-cell textarea {
   width: 100%; min-height: 66px; padding: 11px 12px; resize: vertical;
   border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--ink); outline: 0;
@@ -501,12 +502,88 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .age-event-cell textarea:hover { border-color: #d6d4cc; background: white; }
 .age-event-cell textarea:focus { border-color: #698498; background: white; box-shadow: 0 0 0 3px rgb(71 103 125 / 9%); }
 .age-event-cell textarea::placeholder { color: #aaaDA7; }
+.choose-topic-button {
+  align-self: flex-start; padding: 5px 8px; border: 1px dashed #9bafb9; border-radius: 6px;
+  background: #f8fbfc; color: var(--blue); cursor: pointer; font-size: 8px; font-weight: 800;
+}
+.choose-topic-button:hover { border-style: solid; background: var(--blue-soft); }
+.age-episode-list { display: flex; flex-direction: column; gap: 6px; }
+.age-episode-list > button {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  padding: 8px; border: 1px solid #d7e0e3; border-radius: 8px; background: white; cursor: pointer; text-align: left;
+}
+.age-episode-list > button:hover { border-color: #91a9b6; box-shadow: 0 2px 8px rgb(45 70 83 / 7%); }
+.age-episode-list > button > strong { min-width: 0; overflow: hidden; color: #3c4643; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.age-episode-list > button > b { color: #8a9ca4; font-size: 16px; }
+.episode-topic-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 6px; border-radius: 6px; background: var(--topic-bg, var(--blue-soft)); color: var(--topic-ink, var(--blue)); font-size: 7px; font-weight: 800; white-space: nowrap; }
+.episode-topic-badge i { width: 15px; height: 15px; display: grid; place-items: center; border-radius: 4px; background: white; font-family: "Yu Mincho", serif; font-size: 8px; font-style: normal; }
 .age-timeline-empty { min-height: 300px; display: grid; place-items: center; align-content: center; padding: 35px; color: var(--muted); text-align: center; }
 .age-timeline-empty > span { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--blue-soft); color: var(--blue); font-family: "Yu Mincho", serif; }
 .age-timeline-empty h3 { margin: 14px 0 5px; color: #555a54; font-family: "Yu Mincho", serif; font-size: 17px; }
 .age-timeline-empty p { margin: 0; font-size: 10px; }
 .undated-notes-card { display: grid; grid-template-columns: 300px 1fr; align-items: start; gap: 20px; padding: 24px 26px; }
 .undated-notes-card textarea { padding: 12px; resize: vertical; font-size: 11px; line-height: 1.7; }
+
+/* Episode topics and deep-dive editor */
+.school { --topic-bg: #e8eff3; --topic-ink: #345c73; }
+.family { --topic-bg: #f5e9e6; --topic-ink: #885044; }
+.friends { --topic-bg: #e9f1e8; --topic-ink: #557044; }
+.home { --topic-bg: #f3eee3; --topic-ink: #80633e; }
+.work { --topic-bg: #e8edef; --topic-ink: #455f6a; }
+.health { --topic-bg: #f4e9ed; --topic-ink: #84566a; }
+.interest { --topic-bg: #eeeaf5; --topic-ink: #675982; }
+.challenge { --topic-bg: #f7ebdc; --topic-ink: #925f29; }
+.other { --topic-bg: #ecece8; --topic-ink: #666b65; }
+.topic-picker-modal {
+  width: min(760px, 94vw); padding: 27px; border-radius: 15px; background: var(--paper); box-shadow: var(--shadow);
+}
+.topic-picker-modal .utility-heading h2 { font-size: 23px; }
+.topic-picker-lead { margin: 12px 0 21px; color: var(--muted); font-size: 10px; line-height: 1.7; }
+.episode-topic-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.episode-topic-grid > button {
+  position: relative; min-height: 92px; display: grid; grid-template-columns: 38px 1fr; grid-template-rows: auto auto;
+  align-content: center; align-items: center; gap: 3px 10px; padding: 12px 28px 12px 12px;
+  border: 1px solid #ddddd7; border-radius: 10px; background: white; cursor: pointer; text-align: left;
+}
+.episode-topic-grid > button:hover { border-color: #91a9b6; background: #fbfcfc; box-shadow: 0 4px 13px rgb(36 56 68 / 7%); }
+.topic-icon { grid-row: 1 / 3; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 9px; background: var(--topic-bg, var(--blue-soft)); color: var(--topic-ink, var(--blue)); font-family: "Yu Mincho", serif; font-size: 15px; font-weight: 800; }
+.episode-topic-grid strong { align-self: end; font-size: 11px; }
+.episode-topic-grid small { align-self: start; color: var(--muted); font-size: 8px; }
+.episode-topic-grid > button > b { position: absolute; right: 12px; color: #9ca5a2; font-size: 17px; }
+.episode-modal-layer { padding: 18px; }
+.episode-editor-modal {
+  width: min(820px, 96vw); max-height: 94vh; display: flex; flex-direction: column;
+  border-radius: 16px; background: var(--paper); box-shadow: var(--shadow); overflow: hidden;
+}
+.episode-editor-header {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 20px 25px;
+  border-bottom: 1px solid var(--line); background: #fffefa;
+}
+.episode-editor-header h2 { margin: 4px 0 3px; font-family: "Yu Mincho", serif; font-size: 22px; }
+.episode-editor-header > div > span { color: var(--muted); font-size: 9px; }
+.episode-editor-scroll { min-height: 0; padding: 22px 25px 32px; overflow-y: auto; }
+.episode-guide { display: flex; align-items: center; gap: 13px; margin-bottom: 22px; padding: 14px; border-radius: 11px; background: #f4f6f5; }
+.episode-guide .topic-icon { flex: 0 0 42px; width: 42px; height: 42px; }
+.episode-guide strong { font-size: 11px; }
+.episode-guide p { margin: 4px 0 0; color: #686e68; font-size: 9px; line-height: 1.6; }
+.episode-form-section { display: flex; flex-direction: column; gap: 14px; padding: 22px 0; border-top: 1px solid var(--line); }
+.episode-form-section:first-of-type { border-top: 0; padding-top: 0; }
+.episode-section-title { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+.episode-section-title > span { flex: 0 0 25px; width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; background: var(--blue); color: white; font-size: 9px; font-weight: 800; }
+.episode-form-section.reflection .episode-section-title > span { background: #8a6847; }
+.episode-section-title > div { display: flex; flex-direction: column; gap: 3px; }
+.episode-section-title strong { font-size: 11px; }
+.episode-section-title small { color: var(--muted); font-size: 8px; }
+.episode-form-section label { display: flex; flex-direction: column; gap: 6px; color: #4e534e; font-size: 9px; font-weight: 700; }
+.episode-form-section input, .episode-form-section textarea {
+  width: 100%; border: 1px solid #d6d4cc; border-radius: 8px; background: white; color: var(--ink); outline: 0; font-size: 10px;
+}
+.episode-form-section input { height: 40px; padding: 0 10px; }
+.episode-form-section textarea { padding: 10px; resize: vertical; line-height: 1.75; }
+.episode-form-section input:focus, .episode-form-section textarea:focus { border-color: #698498; box-shadow: 0 0 0 3px rgb(71 103 125 / 9%); }
+.episode-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.episode-editor-footer { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 15px 25px; border-top: 1px solid var(--line); background: #f8f7f2; }
+.episode-editor-footer > div { display: flex; align-items: center; gap: 14px; }
 
 @media (max-width: 1200px) {
   .topbar { grid-template-columns: auto 1fr; }
@@ -526,7 +603,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .editor-panel { position: fixed; z-index: 30; right: 0; top: 76px; width: min(370px, 94vw); box-shadow: -12px 0 35px rgb(35 39 36 / 13%); }
   .question-card { grid-template-columns: 24px 30px minmax(0, 1fr) auto auto; }
   .move-actions { display: none; }
-  .timeline-summary { grid-template-columns: repeat(3, 1fr); }
+  .timeline-summary { grid-template-columns: repeat(4, 1fr); }
   .timeline-summary > p { display: none; }
   .school-record-list { grid-template-columns: 1fr; }
   .school-record { grid-template-columns: minmax(0, 1fr) 225px; }
@@ -574,6 +651,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .age-timeline-main { width: calc(100% - 28px); margin: 14px auto 36px; gap: 14px; }
   .timeline-summary > div { min-height: 65px; padding: 10px 8px; text-align: center; }
   .timeline-summary strong { font-size: 18px; }
+  .timeline-summary { grid-template-columns: repeat(2, 1fr); }
+  .timeline-summary > div:nth-child(2n) { border-right: 0; }
   .school-history-heading, .age-timeline-heading { align-items: flex-start; padding: 19px 16px; }
   .school-history-heading { flex-direction: column; }
   .school-history-heading .button { width: 100%; }
@@ -600,10 +679,24 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .school-marker { padding: 5px 7px; }
   .age-event-cell { grid-column: 2; padding: 8px 10px 10px; }
   .age-event-cell textarea { min-height: 72px; padding: 9px; border-color: #e0ded7; background: white; }
+  .age-episode-list > button { grid-template-columns: auto minmax(0, 1fr); }
+  .age-episode-list > button > b { display: none; }
+  .episode-topic-grid { grid-template-columns: repeat(2, 1fr); }
+  .episode-modal-layer { padding: 0; }
+  .episode-editor-modal { width: 100vw; max-height: 100vh; height: 100vh; border-radius: 0; }
+  .episode-editor-header { padding: 16px; }
+  .episode-editor-header h2 { font-size: 19px; }
+  .episode-editor-scroll { padding: 17px 16px 25px; }
+  .episode-field-grid { grid-template-columns: 1fr; }
+  .episode-editor-footer { align-items: stretch; flex-direction: column-reverse; padding: 12px 16px; }
+  .episode-editor-footer > div { justify-content: space-between; }
   .undated-notes-card { padding: 19px 16px; }
 }
 
 @media (max-width: 520px) {
   .login-shell { padding: 15px; }
   .login-card { padding: 34px 22px 28px; }
+  .topic-picker-modal { width: calc(100vw - 20px); max-height: calc(100vh - 20px); padding: 20px 16px; overflow-y: auto; }
+  .episode-topic-grid { grid-template-columns: 1fr; }
+  .episode-topic-grid > button { min-height: 75px; }
 }
