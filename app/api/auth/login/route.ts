@@ -26,13 +26,20 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const candidate = formData.get('password');
+  const requestedNext = formData.get('next');
 
   if (typeof candidate !== 'string' || !timingSafeEqual(candidate, password)) {
     await new Promise((resolve) => setTimeout(resolve, 350));
-    return NextResponse.redirect(new URL('/login?error=1', request.url), 303);
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('error', '1');
+    if (typeof requestedNext === 'string' && requestedNext.startsWith('/') && !requestedNext.startsWith('//')) {
+      loginUrl.searchParams.set('next', requestedNext);
+    }
+    return NextResponse.redirect(loginUrl, 303);
   }
 
-  const response = NextResponse.redirect(new URL('/', request.url), 303);
+  const nextPath = typeof requestedNext === 'string' && requestedNext.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/admin';
+  const response = NextResponse.redirect(new URL(nextPath, request.url), 303);
   response.cookies.set(AUTH_COOKIE_NAME, await createSessionToken(cookieSecret), {
     httpOnly: true,
     secure: true,

@@ -47,6 +47,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const loginUrl = new URL('/login', request.url);
+  loginUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`);
   const response = NextResponse.redirect(loginUrl);
   response.headers.set('Cache-Control', 'no-store');
   response.headers.set('X-Robots-Tag', 'noindex, nofollow');

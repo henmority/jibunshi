@@ -7,6 +7,9 @@
   "vars": {
     "SITE_URL": "https://jibunshi-admin.takatsugumihara.workers.dev"
   },
+  "ai": {
+    "binding": "AI"
+  },
   "assets": {
     "directory": "./dist/client"
   },

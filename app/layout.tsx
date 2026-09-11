@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-const title = '設問編集室｜自分史作成サポート';
-const description = 'AIで作られた自分史の設問を、確認・編集・検証して安全に公開するためのローカル編集ツール。';
+const title = 'わたしの自分史｜人生を一冊の物語へ';
+const description = '人生年表、エピソード、性格・考え方を入力し、AIと一緒に印刷できる自分史を作るサービス。';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? 'http://localhost:3001'),

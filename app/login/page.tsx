@@ -6,11 +6,11 @@ export const metadata: Metadata = {
 };
 
 type LoginPageProps = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
 
   return (
     <main className="login-shell">
@@ -25,6 +25,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         ) : null}
 
         <form className="login-form" action="/api/auth/login" method="post">
+          <input type="hidden" name="next" value={next?.startsWith('/') && !next.startsWith('//') ? next : '/admin'} />
           <label htmlFor="password">管理者パスワード</label>
           <input
             id="password"

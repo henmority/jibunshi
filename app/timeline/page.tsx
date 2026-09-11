@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { TIMELINE_STORAGE_KEY } from '@/lib/life-story';
+
 type SchoolType = 'kindergarten' | 'nursery' | 'elementary' | 'juniorHigh' | 'highSchool' | 'university' | 'graduate' | 'other';
 
 type SchoolRecord = {
@@ -62,7 +64,7 @@ type AgeTimelineRowProps = {
   onSelectEpisode: (episodeId: string) => void;
 };
 
-const STORAGE_KEY = 'jibunshi-life-timeline-v3';
+const STORAGE_KEY = TIMELINE_STORAGE_KEY;
 const PREVIOUS_STORAGE_KEY = 'jibunshi-life-timeline-v2';
 const LEGACY_STORAGE_KEY = 'jibunshi-life-timeline-v1';
 const MAX_AGE = 130;
@@ -594,13 +596,16 @@ export default function TimelinePage() {
   return (
     <main className="timeline-shell">
       <header className="timeline-topbar">
-        <Link className="timeline-brand" href="/" aria-label="設問編集室へ戻る">
+        <Link className="timeline-brand" href="/" aria-label="自分史づくりの進行画面へ戻る">
           <span aria-hidden="true">史</span>
           <div><small>JIBUNSHI STUDIO</small><strong>人生年表</strong></div>
         </Link>
-        <nav className="studio-nav" aria-label="機能を切り替える">
-          <Link href="/">設問編集</Link>
+        <nav className="studio-nav" aria-label="自分史づくりの手順">
+          <Link href="/">進み具合</Link>
           <span className="active">人生年表</span>
+          <Link href="/diagnosis">性格・考え方</Link>
+          <Link href="/story">AI原稿</Link>
+          <Link href="/book">印刷</Link>
         </nav>
         <div className="timeline-header-actions">
           <span className={`save-state ${saveState}`}><i />{saveState === 'saved' ? '保存済み' : saveState === 'saving' ? '保存中…' : '保存失敗'}</span>
@@ -737,6 +742,11 @@ export default function TimelinePage() {
             <textarea rows={6} value={timeline.undatedNotes} onChange={(event) => updateTimeline({ undatedNotes: event.target.value })} />
           </section>
         ) : null}
+
+        <section className="flow-next-card">
+          <div><small>STEP 3</small><h2>年表の次は、性格・考え方へ</h2><p>選択式と具体的な経験から、人生史に表れる人柄を整理します。</p></div>
+          <Link className="button primary" href="/diagnosis">性格・考え方を入力する　›</Link>
+        </section>
       </div>
 
       {topicPickerAge !== null ? (
