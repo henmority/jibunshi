@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+
+/* eslint-disable @next/next/no-html-link-for-pages -- Vinext production navigation crashes when next/link initializes RSC prefetch. */
 
 export const metadata: Metadata = {
   title: '管理者ログイン｜設問編集室',
@@ -41,7 +42,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </form>
 
         <p className="login-note">ログイン状態はこのブラウザで12時間保持されます。</p>
-        <Link className="login-user-link" href="/">← パスワード不要の利用者画面へ戻る</Link>
+        <a className="login-user-link" href="/">← パスワード不要の利用者画面へ戻る</a>
       </section>
     </main>
   );

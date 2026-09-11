@@ -1,7 +1,8 @@
 'use client';
 
+/* eslint-disable @next/next/no-html-link-for-pages -- Vinext production navigation crashes when next/link initializes RSC prefetch. */
+
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 
 import {
   initialQuestionSet,
@@ -827,8 +828,8 @@ export default function Home() {
           <button className="button secondary" onClick={() => { setPreviewIndex(0); setPreviewOpen(true); }}>
             ◉ 利用者画面で確認
           </button>
-          <Link className="button secondary timeline-button" href="/">利用者画面</Link>
-          <Link className="button secondary" href="/admin/story-preview">AI原稿確認</Link>
+          <a className="button secondary timeline-button" href="/">利用者画面</a>
+          <a className="button secondary" href="/admin/story-preview">AI原稿確認</a>
           <button className="button secondary json-button" onClick={() => setImportOpen(true)}>JSON</button>
           <form className="logout-form" action="/api/auth/logout" method="post">
             <button className="button secondary logout-button" type="submit">ログアウト</button>

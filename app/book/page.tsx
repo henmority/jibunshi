@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { FlowHeader } from '@/app/components/flow-header';
@@ -88,7 +87,7 @@ export default function BookPage() {
         <div><p className="flow-eyebrow">STEP 5 — PRINT & PDF</p><h1>A4印刷の仕上がりを確認</h1><p>文章を直す場合は「原稿を編集」へ戻ってください。印刷画面で「PDFに保存」を選ぶこともできます。</p></div>
         <div className="book-toolbar-actions">
           <div className="book-font-switch" aria-label="本文の文字サイズ"><span>文字サイズ</span><button className={fontSize === 'compact' ? 'active' : ''} onClick={() => setFontSize('compact')}>小</button><button className={fontSize === 'standard' ? 'active' : ''} onClick={() => setFontSize('standard')}>中</button><button className={fontSize === 'large' ? 'active' : ''} onClick={() => setFontSize('large')}>大</button></div>
-          <Link className="button secondary" href="/story">原稿を編集</Link>
+          <a className="button secondary" href="/story">原稿を編集</a>
           <button className="button primary large" disabled={!story?.content.trim()} onClick={() => window.print()}>印刷・PDF保存</button>
         </div>
       </section>
@@ -125,7 +124,7 @@ export default function BookPage() {
           </article>
         </div>
       ) : (
-        <section className="book-empty no-print"><span aria-hidden="true">冊</span><h2>印刷する原稿がまだありません</h2><p>年表と性格・考え方を入力し、AI原稿を作成すると、ここにA4の仕上がりが表示されます。</p><Link className="button primary" href="/story">AI原稿の作成へ</Link></section>
+        <section className="book-empty no-print"><span aria-hidden="true">冊</span><h2>印刷する原稿がまだありません</h2><p>年表と性格・考え方を入力し、AI原稿を作成すると、ここにA4の仕上がりが表示されます。</p><a className="button primary" href="/story">AI原稿の作成へ</a></section>
       )}
     </main>
   );

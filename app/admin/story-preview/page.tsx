@@ -1,7 +1,8 @@
 'use client';
 
+/* eslint-disable @next/next/no-html-link-for-pages -- Vinext production navigation crashes when next/link initializes RSC prefetch. */
+
 import { ChangeEvent, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 
 import { initialQuestionSet } from '@/lib/initial-question-set';
 import {
@@ -93,8 +94,8 @@ export default function AdminStoryPreviewPage() {
   return (
     <main className="admin-tool-shell">
       <header className="admin-tool-header">
-        <Link className="flow-brand" href="/admin"><span aria-hidden="true">史</span><div><small>JIBUNSHI STUDIO</small><strong>AI原稿確認</strong></div></Link>
-        <nav><Link href="/admin">設問編集</Link><span>AI原稿確認</span><Link href="/">利用者画面</Link></nav>
+        <a className="flow-brand" href="/admin"><span aria-hidden="true">史</span><div><small>JIBUNSHI STUDIO</small><strong>AI原稿確認</strong></div></a>
+        <nav><a href="/admin">設問編集</a><span>AI原稿確認</span><a href="/">利用者画面</a></nav>
         <form action="/api/auth/logout" method="post"><button className="button secondary" type="submit">ログアウト</button></form>
       </header>
 

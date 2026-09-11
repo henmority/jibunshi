@@ -1,4 +1,4 @@
-import Link from 'next/link';
+/* eslint-disable @next/next/no-html-link-for-pages -- Vinext production navigation crashes when next/link initializes RSC prefetch. */
 
 type FlowStep = 'home' | 'timeline' | 'diagnosis' | 'story' | 'book';
 
@@ -12,20 +12,20 @@ const FLOW_LINKS: Array<{ id: Exclude<FlowStep, 'home'>; number: string; label: 
 export function FlowHeader({ active }: { active: FlowStep }) {
   return (
     <header className="flow-header">
-      <Link className="flow-brand" href="/" aria-label="自分史づくりの進行画面へ戻る">
+      <a className="flow-brand" href="/" aria-label="自分史づくりの進行画面へ戻る">
         <span aria-hidden="true">史</span>
         <div><small>JIBUNSHI STUDIO</small><strong>わたしの自分史</strong></div>
-      </Link>
+      </a>
       <nav className="flow-nav" aria-label="自分史づくりの手順">
         {FLOW_LINKS.map((step) => (
-          <Link className={active === step.id ? 'active' : ''} href={step.href} key={step.id}>
+          <a className={active === step.id ? 'active' : ''} href={step.href} key={step.id}>
             <small>STEP {step.number}</small><span>{step.label}</span>
-          </Link>
+          </a>
         ))}
       </nav>
-      <Link className="flow-home-link" href={active === 'home' ? '/admin' : '/'}>
+      <a className="flow-home-link" href={active === 'home' ? '/admin' : '/'}>
         {active === 'home' ? '管理者はこちら' : '進み具合を見る'}
-      </Link>
+      </a>
     </header>
   );
 }

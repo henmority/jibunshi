@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { FlowHeader } from '@/app/components/flow-header';
@@ -154,7 +153,7 @@ export default function DiagnosisPage() {
         </div>
         <section className="flow-next-card">
           <div><small>STEP 4</small><h2>入力内容から、人生史の原稿へ</h2><p>年表・エピソード・性格や考え方を一つのJSONにまとめ、AIへ送る前に確認できます。</p></div>
-          <Link className="button primary" href="/story">AI原稿の作成へ進む　›</Link>
+          <a className="button primary" href="/story">AI原稿の作成へ進む　›</a>
         </section>
       </section>
     </main>

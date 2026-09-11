@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
 import { FlowHeader } from '@/app/components/flow-header';
@@ -117,12 +116,12 @@ export default function UserHomePage() {
             const status = statusFor(index);
             const isStarted = !['未入力', '未作成', '原稿作成後'].includes(status);
             return (
-              <Link className="flow-step-card" href={step.href} key={step.number}>
+              <a className="flow-step-card" href={step.href} key={step.number}>
                 <span className="flow-step-number">{step.number}</span>
                 <div><small>{step.eyebrow}</small><h3>{step.title}</h3><p>{step.description}</p></div>
                 <span className={`flow-step-status ${isStarted ? 'started' : ''}`}>{status}</span>
                 <b aria-hidden="true">›</b>
-              </Link>
+              </a>
             );
           })}
         </div>
@@ -130,7 +129,7 @@ export default function UserHomePage() {
 
       <footer className="flow-footer">
         <p>入力内容は利用中のブラウザに保存されます。端末を変える場合は、原稿作成画面からJSONを書き出してください。</p>
-        <Link href="/admin">管理者はこちら（設問編集・AI出力確認）</Link>
+        <a href="/admin">管理者はこちら（設問編集・AI出力確認）</a>
       </footer>
     </main>
   );

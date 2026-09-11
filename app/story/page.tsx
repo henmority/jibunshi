@@ -1,7 +1,6 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 
 import { FlowHeader } from '@/app/components/flow-header';
 import { initialQuestionSet, type QuestionSet } from '@/lib/initial-question-set';
@@ -168,9 +167,9 @@ export default function StoryPage() {
         <aside className="story-data-panel">
           <div><p className="flow-eyebrow">SOURCE DATA</p><h2>入力データを確認</h2><p>送信前に、含まれる内容を確認できます。</p></div>
           <div className="story-readiness-list">
-            <Link className={timeline?.subjectName && timeline.birthDate ? 'ready' : ''} href="/timeline"><span>{timeline?.subjectName && timeline.birthDate ? '✓' : '1'}</span><div><strong>基本情報</strong><small>{timeline?.subjectName || '名前が未入力'}</small></div><b>›</b></Link>
-            <Link className={eventCount || episodeCount ? 'ready' : ''} href="/timeline"><span>{eventCount || episodeCount ? '✓' : '2'}</span><div><strong>年表・エピソード</strong><small>{eventCount + episodeCount}件の記録</small></div><b>›</b></Link>
-            <Link className={diagnosisCount ? 'ready' : ''} href="/diagnosis"><span>{diagnosisCount ? '✓' : '3'}</span><div><strong>性格・考え方</strong><small>{diagnosisCount}問回答</small></div><b>›</b></Link>
+            <a className={timeline?.subjectName && timeline.birthDate ? 'ready' : ''} href="/timeline"><span>{timeline?.subjectName && timeline.birthDate ? '✓' : '1'}</span><div><strong>基本情報</strong><small>{timeline?.subjectName || '名前が未入力'}</small></div><b>›</b></a>
+            <a className={eventCount || episodeCount ? 'ready' : ''} href="/timeline"><span>{eventCount || episodeCount ? '✓' : '2'}</span><div><strong>年表・エピソード</strong><small>{eventCount + episodeCount}件の記録</small></div><b>›</b></a>
+            <a className={diagnosisCount ? 'ready' : ''} href="/diagnosis"><span>{diagnosisCount ? '✓' : '3'}</span><div><strong>性格・考え方</strong><small>{diagnosisCount}問回答</small></div><b>›</b></a>
           </div>
           <details className="json-preview"><summary>AIへ送るJSONを見る</summary><pre>{JSON.stringify(bundle, null, 2)}</pre></details>
           <div className="story-data-actions">
@@ -190,7 +189,7 @@ export default function StoryPage() {
               <label><span>題名</span><input value={story.title} onChange={(event) => updateStory({ title: event.target.value })} /></label>
               <label><span>本文</span><textarea rows={28} value={story.content} onChange={(event) => updateStory({ content: event.target.value })} /></label>
               <label className="ai-consent story-regenerate-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span><strong>再生成のため、表示中のデータをAIへ送ることに同意します</strong><small>編集済みの原稿は、再生成すると新しい下書きに置き換わります。</small></span></label>
-              <div className="story-editor-actions"><button className="button secondary" disabled={!consent || generating} onClick={generateStory}>{generating ? '作り直しています…' : 'AIでもう一度作る'}</button><Link className="button primary" href="/book">A4印刷の確認へ　›</Link></div>
+              <div className="story-editor-actions"><button className="button secondary" disabled={!consent || generating} onClick={generateStory}>{generating ? '作り直しています…' : 'AIでもう一度作る'}</button><a className="button primary" href="/book">A4印刷の確認へ　›</a></div>
             </div>
           ) : (
             <div className="story-generate-card">
