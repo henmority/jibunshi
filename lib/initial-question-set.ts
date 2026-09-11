@@ -1,3 +1,5 @@
+import { upgradePersonalityQuestions, type Preference } from './personality';
+
 export type AnswerType =
   | 'single_choice'
   | 'multiple_choice'
@@ -25,6 +27,7 @@ export type Question = {
   intent?: string;
   aiOriginalText?: string;
   reviewMemo?: string;
+  preference?: Preference;
 };
 
 export type Section = {
@@ -67,7 +70,7 @@ function initialQuestion({
   };
 }
 
-export const initialQuestionSet: QuestionSet = {
+const legacyQuestionSet: QuestionSet = {
   schemaVersion: 1,
   questionSetId: 'standard-life-story',
   version: '4.0.0',
@@ -614,3 +617,4 @@ export const initialQuestionSet: QuestionSet = {
     },
   ],
 };
+export const initialQuestionSet: QuestionSet = upgradePersonalityQuestions(legacyQuestionSet);

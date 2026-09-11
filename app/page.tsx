@@ -3,8 +3,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { FlowHeader } from '@/app/components/flow-header';
+import { initialQuestionSet } from '@/lib/initial-question-set';
+import { personalityAnswerCount, upgradePersonalityQuestions } from '@/lib/personality';
 import {
   DIAGNOSIS_STORAGE_KEY,
+  PUBLISHED_QUESTION_SET_KEY,
+  normalizeQuestionSet,
   STORY_STORAGE_KEY,
   TIMELINE_STORAGE_KEY,
   normalizeDiagnosisData,
@@ -40,7 +44,7 @@ const STEPS = [
   },
   {
     number: '3', eyebrow: 'PERSONALITY', title: '性格・考え方を入力',
-    description: '選択式と具体的な経験から、人柄や大切にしてきた価値観を整理します。', href: '/diagnosis',
+    description: '20問・7段階の回答から、普段の考え方や行動の傾向を振り返ります。', href: '/diagnosis',
   },
   {
     number: '4', eyebrow: 'AI DRAFT', title: 'AIで人生史の原稿を作成',
@@ -64,7 +68,7 @@ export default function UserHomePage() {
         profileReady: Boolean(timeline?.subjectName.trim() && timeline.birthDate),
         timelineCount: timeline ? Object.values(timeline.eventsByAge).filter((value) => value.trim()).length : 0,
         episodeCount: timeline?.episodes.length ?? 0,
-        diagnosisCount: diagnosis ? Object.values(diagnosis.answers).filter((value) => Array.isArray(value) ? value.length : value.trim()).length : 0,
+        diagnosisCount: diagnosis ? personalityAnswerCount(upgradePersonalityQuestions(normalizeQuestionSet(readStoredJson(PUBLISHED_QUESTION_SET_KEY)) ?? initialQuestionSet), diagnosis.answers) : 0,
         storyReady: Boolean(story?.content.trim()),
       });
     } catch {

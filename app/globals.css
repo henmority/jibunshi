@@ -987,3 +987,44 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .book-chapter p { break-inside: avoid; }
   .book-colophon { height: calc(297mm - 38mm); }
 }
+.preference-note { color: #68726d; font-size: 12px; line-height: 1.9; margin: 16px 0 24px; }
+.preference-scale { border: 0; padding: 0; margin: 22px 0 0; min-width: 0; }
+.preference-scale-endpoints { display: none; }
+.preference-scale-options { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.preference-scale-options label { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 4px; cursor: pointer; text-align: center; border-radius: 10px; font-size: 11px; color: #596661; line-height: 1.65; border: 1px solid #deded4; background: #fff; }
+.preference-scale-options input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.preference-scale-options label:has(input:focus-visible) { outline: 3px solid #54768c; outline-offset: 3px; }
+.preference-scale-options label:hover { background: #edf2f2; }
+.preference-scale-options .scale-dot { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid #a8b8b1; font-size: 14px; font-weight: 700; }
+.preference-scale-options label.selected { border-color: #385869; background: #eaf0f3; color: #28495b; font-weight: 700; }
+.preference-scale-options label.selected .scale-dot { background: #385869; color: white; border-color: #385869; }
+.preference-scale-caption { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; color: #6b756f; font-size: 11px; }
+.preference-scale-caption button { background: transparent; border: 0; color: #426478; padding: 8px 0; text-decoration: underline; }
+.preference-results { padding: 30px; margin-top: 32px; background: #eef1ed; border: 1px solid #d9dfd7; border-radius: 14px; }
+.preference-results > h2 { margin: 8px 0 12px; font-size: 23px; font-family: 'Yu Mincho', serif; }
+.preference-results > p { font-size: 12px; line-height: 1.9; color: #616d65; }
+.preference-result-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.preference-result-grid article { background: #fffefa; border-radius: 12px; padding: 22px; }
+.preference-result-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.preference-result-heading h3 { font-size: 14px; margin: 0 0 12px; }
+.preference-result-heading small { white-space: nowrap; color: #68726d; }
+.preference-result-grid strong { font-size: 12px; line-height: 1.8; font-weight: 600; }
+.preference-track { height: 8px; background: linear-gradient(90deg, #bfd2c8, #e3e7df, #bed0db); position: relative; margin: 26px 8px 16px; border-radius: 8px; }
+.preference-track span { position: absolute; left: 50%; width: 1px; top: -4px; height: 16px; background: #8c9a94; }
+.preference-track i { width: 16px; height: 16px; position: absolute; top: -4px; border-radius: 50%; background: #36596c; transform: translateX(-50%); box-shadow: 0 0 0 3px #fffefa; }
+.preference-poles { display: flex; justify-content: space-between; gap: 30px; font-size: 11px; line-height: 1.6; color: #626e68; }
+.preference-poles span { max-width: 47%; }
+.preference-poles span:last-child { text-align: right; }
+@media (max-width: 600px) {
+  .preference-scale-options { gap: 3px; }
+  .diagnosis-question { grid-template-columns: minmax(0, 1fr); }
+  .diagnosis-question-number { flex-direction: row; justify-content: space-between; padding: 10px 15px; border-right: 0; border-bottom: 1px solid #e3e0d8; }
+  .diagnosis-question-number b { display: block; }
+  .preference-scale-endpoints { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px; color: #596661; }
+  .preference-scale-options .scale-wording { display: none; }
+  .preference-scale-options label { padding: 10px 2px; font-size: 10px; gap: 8px; overflow-wrap: anywhere; }
+  .preference-scale-options .scale-dot { width: 26px; height: 26px; font-size: 12px; }
+  .preference-result-grid { grid-template-columns: 1fr; }
+  .preference-results { padding: 18px; }
+  .preference-scale-caption { font-size: 10px; }
+}

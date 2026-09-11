@@ -742,7 +742,7 @@ export default function TimelinePage() {
         ) : null}
 
         <section className="flow-next-card">
-          <div><small>STEP 3</small><h2>年表の次は、性格・考え方へ</h2><p>選択式と具体的な経験から、人生史に表れる人柄を整理します。</p></div>
+          <div><small>STEP 3</small><h2>年表の次は、性格・考え方へ</h2><p>20問・7段階の回答から、普段の考え方や行動の傾向を振り返ります。</p></div>
           <a className="button primary" href="/diagnosis">性格・考え方を入力する　›</a>
         </section>
       </div>

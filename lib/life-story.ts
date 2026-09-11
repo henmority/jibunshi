@@ -1,4 +1,5 @@
 import type { QuestionSet } from '@/lib/initial-question-set';
+import { summarizePersonality } from './personality';
 
 export const TIMELINE_STORAGE_KEY = 'jibunshi-life-timeline-v3';
 export const DIAGNOSIS_STORAGE_KEY = 'jibunshi-personality-diagnosis-v1';
@@ -70,6 +71,7 @@ export type LifeStoryBundle = {
   diagnosis: DiagnosisData | null;
   questionSet: QuestionSet | null;
   story: StoryDraft | null;
+  personalityProfile?: ReturnType<typeof summarizePersonality> | null;
 };
 
 const TOPICS = new Set<EpisodeTopic>(['school', 'family', 'friends', 'home', 'work', 'health', 'interest', 'challenge', 'other']);
@@ -193,14 +195,17 @@ export function normalizeQuestionSet(value: unknown): QuestionSet | null {
 export function normalizeLifeStoryBundle(value: unknown): LifeStoryBundle | null {
   const data = objectValue(value);
   if (!data || data.kind !== 'jibunshi-life-story' || data.schemaVersion !== 1) return null;
+  const diagnosis = normalizeDiagnosisData(data.diagnosis);
+  const questionSet = normalizeQuestionSet(data.questionSet);
   return {
     kind: 'jibunshi-life-story',
     schemaVersion: 1,
     exportedAt: stringValue(data.exportedAt),
     timeline: normalizeTimelineData(data.timeline),
-    diagnosis: normalizeDiagnosisData(data.diagnosis),
-    questionSet: normalizeQuestionSet(data.questionSet),
+    diagnosis,
+    questionSet,
     story: normalizeStoryDraft(data.story),
+    personalityProfile: questionSet && diagnosis ? summarizePersonality(questionSet, diagnosis.answers) : null,
   };
 }
 
@@ -217,6 +222,7 @@ export function createLifeStoryBundle(input: {
     schemaVersion: 1,
     exportedAt: exportedAt ?? input.story?.updatedAt ?? input.diagnosis?.updatedAt ?? input.timeline?.updatedAt ?? '',
     ...data,
+    personalityProfile: input.questionSet && input.diagnosis ? summarizePersonality(input.questionSet, input.diagnosis.answers) : null,
   };
 }
 

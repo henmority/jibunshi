@@ -14,6 +14,7 @@ import {
   type SectionKind,
 } from '@/lib/initial-question-set';
 import { PUBLISHED_QUESTION_SET_KEY, QUESTION_EDITOR_STORAGE_KEY } from '@/lib/life-story';
+import { AXES, RATING_LABELS, normalizePreference, upgradePersonalityQuestions } from '@/lib/personality';
 
 type Notice = { tone: 'success' | 'warning' | 'neutral'; message: string } | null;
 
@@ -263,26 +264,7 @@ const legacyInitialQuestionSet: QuestionSet = {
   ],
 };
 
-const STANDARD_MIGRATION_VERSIONS = [legacyInitialQuestionSet.version, '2.0.0'];
-
-function addPersonalityDiagnosisQuestions(questionSet: QuestionSet) {
-  const currentPersonality = initialQuestionSet.sections.find((section) => section.id === 'personality-values');
-  const addedQuestions = currentPersonality?.questions.slice(0, 4) ?? [];
-  const addedIds = new Set(addedQuestions.map((question) => question.id));
-  return {
-    ...questionSet,
-    version: initialQuestionSet.version,
-    updatedAt: new Date().toISOString(),
-    sections: questionSet.sections.map((section) => {
-      if (section.id !== 'personality-values') return section;
-      const existingQuestions = section.questions.filter((question) => !addedIds.has(question.id));
-      return {
-        ...section,
-        questions: [...addedQuestions, ...existingQuestions].map((question, index) => ({ ...question, order: (index + 1) * 10 })),
-      };
-    }),
-  };
-}
+const STANDARD_MIGRATION_VERSIONS = [legacyInitialQuestionSet.version, '2.0.0', '3.0.0', '4.0.0'];
 
 function slugPart(value: string) {
   return value
@@ -348,6 +330,7 @@ function publicQuestionSet(questionSet: QuestionSet) {
             tags: question.tags,
             enabled: question.enabled,
             ...(question.options ? { options: question.options } : {}),
+            ...(question.preference ? { preference: question.preference } : {}),
           })),
       })),
   };
@@ -401,6 +384,7 @@ function normalizeImportedData(value: unknown): QuestionSet | null {
                   ? question.reviewStatus as ReviewStatus
                   : 'unreviewed',
                 options: Array.isArray(question.options) ? question.options.map(String) : undefined,
+                preference: normalizePreference(question.preference),
                 intent: String(question.intent || ''),
                 aiOriginalText: String(question.aiOriginalText || question.text || ''),
                 reviewMemo: String(question.reviewMemo || ''),
@@ -446,24 +430,12 @@ export default function Home() {
             && STANDARD_MIGRATION_VERSIONS.includes(normalized.version)
           ) {
             localStorage.setItem(MIGRATION_BACKUP_KEY, JSON.stringify(normalized));
-            setQuestionSet(initialQuestionSet);
+            setQuestionSet(upgradePersonalityQuestions(normalized));
             setSelectedSectionId('profile');
             setSelectedQuestionId('profile-name');
             setNotice({
               tone: 'success',
-              message: '標準設問を、性格・考え方診断を含む第4版へ更新しました。以前の下書きはブラウザ内にバックアップしています。',
-            });
-          } else if (
-            normalized
-            && normalized.questionSetId === initialQuestionSet.questionSetId
-            && normalized.version === '3.0.0'
-          ) {
-            localStorage.setItem(MIGRATION_BACKUP_KEY, JSON.stringify(normalized));
-            const migrated = addPersonalityDiagnosisQuestions(normalized);
-            setQuestionSet(migrated);
-            setNotice({
-              tone: 'success',
-              message: 'これまでの編集内容を残したまま、性格・考え方の選択式設問を追加しました。',
+              message: '性格・考え方を20問・7段階へ更新しました。旧設問と編集内容は非表示の旧版セクションとバックアップに保存しています。',
             });
           } else if (normalized) {
             setQuestionSet(normalized);
@@ -726,7 +698,7 @@ export default function Home() {
         localStorage.setItem(BACKUP_KEY, JSON.stringify(questionSet));
         historyRef.current = [...historyRef.current, questionSet];
         futureRef.current = [];
-        setQuestionSet(imported);
+        setQuestionSet(upgradePersonalityQuestions(imported));
         setSelectedSectionId(imported.sections[0]?.id ?? '');
         setSelectedQuestionId(imported.sections[0]?.questions[0]?.id ?? '');
         setImportOpen(false);
@@ -783,7 +755,7 @@ export default function Home() {
     if (question.answerType === 'date') return <input className="preview-text-input" type="date" />;
     if (question.answerType === 'year_month') return <input className="preview-text-input" type="month" />;
     if (question.answerType === 'rating') {
-      return <div className="rating-row">{[1, 2, 3, 4, 5].map((number) => <button key={number}>{number}</button>)}</div>;
+      return <div className="rating-row">{RATING_LABELS.map((label, index) => <button key={label} title={label}>{index + 1}</button>)}</div>;
     }
     if (question.answerType === 'short_text') return <input className="preview-text-input" placeholder="ここに入力してください" />;
     return (
@@ -1022,6 +994,17 @@ export default function Home() {
                       </label>
                     </div>
 
+                    {selectedQuestion.answerType === 'rating' ? <fieldset className="option-editor">
+                      <legend>7段階・傾向の集計</legend>
+                      <p>1＝まったく思わない、4＝どちらともいえない、7＝かなり思う。設問の意味を変えた場合は集計する観点と方向も確認してください。</p>
+                      <label><span>集計する観点</span><select value={selectedQuestion.preference?.axis ?? ''} onChange={(event) => updateQuestion({ preference: event.target.value ? { axis: event.target.value as typeof AXES[number]['id'], direction: selectedQuestion.preference?.direction ?? 1 } : undefined })}>
+                        <option value="">集計しない</option>{AXES.map((axis) => <option value={axis.id} key={axis.id}>{axis.title}</option>)}
+                      </select></label>
+                      {selectedQuestion.preference ? <label><span>「かなり思う」の向き</span><select value={selectedQuestion.preference.direction} onChange={(event) => updateQuestion({ preference: { ...selectedQuestion.preference!, direction: Number(event.target.value) as -1 | 1 } })}>
+                        <option value={-1}>{AXES.find((axis) => axis.id === selectedQuestion.preference?.axis)?.left}</option>
+                        <option value={1}>{AXES.find((axis) => axis.id === selectedQuestion.preference?.axis)?.right}</option>
+                      </select></label> : null}
+                    </fieldset> : null}
                     {['single_choice', 'multiple_choice'].includes(selectedQuestion.answerType) && (
                       <fieldset className="option-editor">
                         <legend>選択肢</legend>

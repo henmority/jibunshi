@@ -1,6 +1,8 @@
 import type { LifeStoryBundle } from '@/lib/life-story';
+import { initialQuestionSet } from '@/lib/initial-question-set';
+import { ratingValue, RATING_LABELS, summarizePersonality } from '@/lib/personality';
 
-export const STORY_PROMPT_VERSION = 'japanese-life-story-v1';
+export const STORY_PROMPT_VERSION = 'japanese-life-story-v2-preferences';
 export const STORY_MODEL = '@cf/openai/gpt-oss-120b';
 
 const TOPIC_LABELS: Record<string, string> = {
@@ -9,10 +11,15 @@ const TOPIC_LABELS: Record<string, string> = {
 };
 
 export function buildStorySource(bundle: LifeStoryBundle) {
-  const personalityAnswers = Object.entries(bundle.diagnosis?.answers ?? {}).map(([questionId, answer]) => ({
-    questionId,
-    answer,
-  }));
+  const set = bundle.questionSet ?? initialQuestionSet;
+  const questionMap = new Map(set.sections.flatMap((section) => section.questions).map((question) => [question.id, question]));
+  const personalityAnswers = Object.entries(bundle.diagnosis?.answers ?? {}).filter(([, answer]) => Array.isArray(answer) ? answer.length : answer.trim()).map(([questionId, answer]) => {
+    const question = questionMap.get(questionId);
+    const score = question?.answerType === 'rating' ? ratingValue(answer) : null;
+    return { questionId, ...(question ? { question: question.text } : {}), answer,
+      ...(question?.answerType === 'rating' ? { responseMeaning: score === null ? '無効な評価。解釈しない。' : RATING_LABELS[score - 1], scale: '1=まったく思わない、4=どちらともいえない、7=かなり思う' } : {}),
+    };
+  });
 
   return {
     profile: {
@@ -44,6 +51,7 @@ export function buildStorySource(bundle: LifeStoryBundle) {
       .sort((a, b) => a.age - b.age) ?? [],
     undatedNotes: bundle.timeline?.undatedNotes ?? '',
     personalityAnswers,
+    personalityProfile: summarizePersonality(set, bundle.diagnosis?.answers ?? {}),
   };
 }
 
@@ -59,6 +67,8 @@ export function buildStoryInstructions(additionalInstruction = '') {
 - 別々の回答やエピソードの間に、資料で明記されていない因果関係や時間的なつながりを作らない。
 - 「今でも続いている」「土台になった」「学んだ」「自信が芽生えた」「今後も〜だろう」などは、本人の回答に同じ内容がある場合だけ使う。
 - 性格や価値観は診断名として断定せず、本人の回答や行動が伝わる描写として反映する。
+- 7段階の回答は質問文への同意の度合い。1〜3は不同意、4は中立、5〜7は同意。低得点や中立の質問文を、本人の性格として肯定して書かない。
+- personalityProfileは独自の自己理解シートの集計。正式なMBTIのタイプや確定した人格ではない。未完了の軸は解釈しない。数値を能力や確率として扱わず、今の傾向を過去の全時期に当てはめない。
 - 病気、家族関係、後悔などの繊細な内容を扇情的に扱わない。
 - 同じ出来事を複数章で繰り返さない。
 - 日本語の自然な一人称または三人称で統一する。資料から判断できなければ三人称を使う。

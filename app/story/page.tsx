@@ -4,6 +4,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { FlowHeader } from '@/app/components/flow-header';
 import { initialQuestionSet, type QuestionSet } from '@/lib/initial-question-set';
+import { personalityAnswerCount, upgradePersonalityQuestions } from '@/lib/personality';
 import {
   DIAGNOSIS_STORAGE_KEY,
   PUBLISHED_QUESTION_SET_KEY,
@@ -48,7 +49,7 @@ export default function StoryPage() {
         setTimeline(normalizeTimelineData(readStoredJson(TIMELINE_STORAGE_KEY)));
         setDiagnosis(normalizeDiagnosisData(readStoredJson(DIAGNOSIS_STORAGE_KEY)));
         setStory(normalizeStoryDraft(readStoredJson(STORY_STORAGE_KEY)));
-        setQuestionSet(normalizeQuestionSet(readStoredJson(PUBLISHED_QUESTION_SET_KEY)) ?? initialQuestionSet);
+        setQuestionSet(upgradePersonalityQuestions(normalizeQuestionSet(readStoredJson(PUBLISHED_QUESTION_SET_KEY)) ?? initialQuestionSet));
       } catch {
         setError('保存データを読み込めませんでした。JSONファイルがあれば読み込み直せます。');
       } finally {
@@ -67,7 +68,7 @@ export default function StoryPage() {
   const bundle = useMemo(() => createLifeStoryBundle({ timeline, diagnosis, questionSet, story }), [diagnosis, questionSet, story, timeline]);
   const eventCount = timeline ? Object.values(timeline.eventsByAge).filter((value) => value.trim()).length : 0;
   const episodeCount = timeline?.episodes.length ?? 0;
-  const diagnosisCount = diagnosis ? Object.values(diagnosis.answers).filter((value) => Array.isArray(value) ? value.length : value.trim()).length : 0;
+  const diagnosisCount = diagnosis ? personalityAnswerCount(questionSet, diagnosis.answers) : 0;
   const canGenerate = Boolean(timeline && (eventCount || episodeCount));
 
   function persistImported(imported: LifeStoryBundle) {
