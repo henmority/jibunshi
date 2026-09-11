@@ -23,7 +23,9 @@ export function FlowHeader({ active }: { active: FlowStep }) {
           </Link>
         ))}
       </nav>
-      <Link className="flow-home-link" href="/">進み具合を見る</Link>
+      <Link className="flow-home-link" href={active === 'home' ? '/admin' : '/'}>
+        {active === 'home' ? '管理者はこちら' : '進み具合を見る'}
+      </Link>
     </header>
   );
 }

@@ -610,9 +610,6 @@ export default function TimelinePage() {
         <div className="timeline-header-actions">
           <span className={`save-state ${saveState}`}><i />{saveState === 'saved' ? '保存済み' : saveState === 'saving' ? '保存中…' : '保存失敗'}</span>
           <button className="button secondary" onClick={() => downloadTimeline(timeline)}>JSONで保存</button>
-          <form className="logout-form" action="/api/auth/logout" method="post">
-            <button className="button secondary" type="submit">ログアウト</button>
-          </form>
         </div>
       </header>
 

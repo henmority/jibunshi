@@ -95,9 +95,9 @@ export default function UserHomePage() {
       <FlowHeader active="home" />
       <section className="flow-hero">
         <div>
-          <p className="flow-eyebrow">YOUR LIFE, IN YOUR WORDS</p>
+          <p className="flow-eyebrow">人生史 利用者用 · パスワード不要</p>
           <h1>思い出をたどり、<br />一冊の人生史へ。</h1>
-          <p>覚えているところから少しずつ入力できます。内容はこのブラウザへ自動保存され、AIへ送る前に必ず確認できます。</p>
+          <p>そのまま年表づくりを始められます。覚えているところから少しずつ入力でき、内容はこのブラウザへ自動保存されます。</p>
         </div>
         <div className="flow-progress-card">
           <span>現在の進み具合</span>
@@ -130,7 +130,7 @@ export default function UserHomePage() {
 
       <footer className="flow-footer">
         <p>入力内容は利用中のブラウザに保存されます。端末を変える場合は、原稿作成画面からJSONを書き出してください。</p>
-        <Link href="/admin">管理者用の設問編集室</Link>
+        <Link href="/admin">管理者はこちら（設問編集・AI出力確認）</Link>
       </footer>
     </main>
   );

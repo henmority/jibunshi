@@ -7,20 +7,20 @@ type AuthBindings = {
   AUTH_COOKIE_SECRET?: string;
 };
 
-const PUBLIC_PATHS = ['/login', '/api/auth/login', '/favicon.svg', '/og.png'];
-
 function isLocalRequest(request: NextRequest) {
   const hostname = request.nextUrl.hostname;
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
 }
 
-function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/_next/static/');
+function isAdminPath(pathname: string) {
+  return pathname === '/admin' || pathname.startsWith('/admin/');
 }
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  if (isPublicPath(pathname)) return NextResponse.next();
+  // 利用者向けの5画面とAI生成APIは、パスワードなしで利用できます。
+  // 設問編集とJSON確認を置く /admin 以下だけを管理者認証で保護します。
+  if (!isAdminPath(pathname)) return NextResponse.next();
 
   const bindings = env as unknown as AuthBindings;
   const cookieSecret = bindings.AUTH_COOKIE_SECRET;

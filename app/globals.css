@@ -131,6 +131,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 }
 .login-form button:hover { background: var(--blue-hover); }
 .login-note { margin: 18px 0 0; color: #92958f; font-size: 9px; }
+.login-user-link { display: inline-block; margin-top: 16px; color: #65777e; font-size: 9px; font-weight: 750; text-decoration: none; }
+.login-user-link:hover { text-decoration: underline; }
 
 /* Three-column workspace */
 .workspace { display: grid; grid-template-columns: 224px minmax(520px, 1fr) 360px; min-height: calc(100vh - 76px); }
