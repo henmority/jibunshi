@@ -990,6 +990,17 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .preference-note { color: #68726d; font-size: 12px; line-height: 1.9; margin: 16px 0 24px; }
 .preference-scale { border: 0; padding: 0; margin: 22px 0 0; min-width: 0; }
 .preference-scale-endpoints { display: none; }
+.preference-unsure { display: flex; align-items: center; gap: 9px; margin-top: 16px; font-size: 12px; color: #596661; cursor: pointer; min-height: 36px; }
+.preference-unsure input { width: 18px; height: 18px; accent-color: #385869; }
+.episode-interview-field { display: flex; flex-direction: column; gap: 10px; }
+.episode-interview-field label { font-size: 15px; line-height: 1.7; }
+.episode-interview-field p, .episode-optional-questions > p, .episode-interview-complete p { margin: 0; font-size: 12px; line-height: 1.8; color: var(--muted); }
+.episode-interview-field input, .episode-interview-field textarea { font-size: 16px; }
+.episode-optional-questions { display: flex; flex-direction: column; gap: 20px; }
+.episode-step-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.episode-skip-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); }
+.episode-skip-actions button { border: 0; padding: 12px 6px; background: transparent; color: #426478; text-decoration: underline; cursor: pointer; }
+.episode-interview-complete { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .preference-scale-options { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
 .preference-scale-options label { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 4px; cursor: pointer; text-align: center; border-radius: 10px; font-size: 11px; color: #596661; line-height: 1.65; border: 1px solid #deded4; background: #fff; }
 .preference-scale-options input { position: absolute; opacity: 0; width: 1px; height: 1px; }

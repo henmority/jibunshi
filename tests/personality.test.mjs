@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 
-// Pure scoring/migration logic has only type imports, so run the shipped TS without a browser.
-const source = readFileSync(new URL('../lib/personality.ts', import.meta.url), 'utf8');
-const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
-const personalityModule = `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`;
+// Run the shipped pure TS modules without requiring a browser or adding a test dependency.
+const episodeModule = moduleUrl('../lib/episode-guide.ts');
+const wordingModule = moduleUrl('../lib/question-wording.ts');
+const personalityModule = moduleUrl('../lib/personality.ts', { './episode-guide': episodeModule, './question-wording': wordingModule });
 const { createPersonalitySection, summarizePersonality, upgradePersonalityQuestions, ratingValue, personalityAnswerCount } = await import(personalityModule);
 const section = createPersonalitySection();
-const set = { questionSetId: 'standard-life-story', version: '5.0.0', sections: [section] };
+const set = { questionSetId: 'standard-life-story', version: '6.0.0', sections: [section] };
 const answersFor = (value) => Object.fromEntries(section.questions.map((q) => [q.id, value(q)]));
 
 test('20 unique items, five per dimension with both scoring directions', () => {
@@ -28,10 +28,10 @@ test('reverse scoring reaches the correct ends, independently of item wording di
   }
 });
 test('neutral is balanced; skipped, malformed, or incomplete answers are not scored as neutral', () => {
-  assert.ok(summarizePersonality(set, answersFor(() => '4')).axes.every((axis) => axis.position === 50 && axis.summary === '両方の傾向が見られます'));
+  assert.ok(summarizePersonality(set, answersFor(() => '4')).axes.every((axis) => axis.position === 50 && axis.summary === '今回の回答では、はっきりした偏りは見られません'));
   assert.ok(summarizePersonality(set, {}).axes.every((axis) => axis.position === null));
   for (const invalid of ['', '0', '8', '4.5', ['4'], null, 4]) assert.equal(ratingValue(invalid), null);
-  const answers = answersFor(() => '7'); delete answers['preference-01'];
+  const answers = answersFor(() => '7'); delete answers['preference-v2-01'];
   assert.equal(summarizePersonality(set, answers).axes[0].complete, false);
   assert.equal(personalityAnswerCount(set, { ...answers, 'old-answer': '古い回答' }), 19);
 });
@@ -52,17 +52,18 @@ test('migration preserves edits and archived items and is idempotent after admin
   assert.equal(migrated.sections[1].enabled, false);
   assert.equal(migrated.sections[1].questions[0].text, '編集した設問');
   assert.equal(old.sections[1].enabled, true);
-  migrated.sections[2].questions.pop();
+  migrated.sections.find((s) => s.id === 'personality-preferences-v2').questions.pop();
   assert.equal(upgradePersonalityQuestions(migrated), migrated);
   assert.equal(upgradePersonalityQuestions({ ...old, questionSetId: 'custom' }).version, '4.0.0');
 });
 
-async function loadModule(path, dependencies) {
+function moduleUrl(path, dependencies = {}) {
   const raw = readFileSync(new URL(path, import.meta.url), 'utf8');
   let compiled = ts.transpileModule(raw, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
   for (const [specifier, url] of Object.entries(dependencies)) compiled = compiled.replaceAll(`'${specifier}'`, JSON.stringify(url));
-  return import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
+  return `data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`;
 }
+const loadModule = (path, dependencies) => import(moduleUrl(path, dependencies));
 
 test('JSON roundtrip recomputes profile, and AI receives question wording plus disagreement meaning', async () => {
   const { createLifeStoryBundle, normalizeLifeStoryBundle } = await loadModule('../lib/life-story.ts', { './personality': personalityModule });
@@ -80,4 +81,52 @@ test('JSON roundtrip recomputes profile, and AI receives question wording plus d
   assert.equal(ai.personalityAnswers[0].question, section.questions[0].text);
   assert.equal(ai.personalityAnswers[0].responseMeaning, 'まったく思わない');
   assert.deepEqual(ai.personalityProfile, bundle.personalityProfile);
+});
+
+test('unsure is counted as reviewed but excluded from scores, with at least three valid answers required', () => {
+  const answers = answersFor(() => 'unsure');
+  assert.equal(personalityAnswerCount(set, answers), 20);
+  assert.ok(summarizePersonality(set, answers).axes.every((a) => !a.complete && a.position === null && a.skipped === 5));
+  for (const id of ['01', '05', '09']) answers[`preference-v2-${id}`] = '4';
+  const energy = summarizePersonality(set, answers).axes[0];
+  assert.equal(energy.answered, 3);
+  assert.equal(energy.skipped, 2);
+  assert.equal(energy.position, 50);
+});
+
+test('version 5 migration archives old answers and preserves administrator wording, IDs and deletions', () => {
+  const old = { questionSetId: 'standard-life-story', version: '5.0.0', sections: [
+    { id: 'custom-section', kind: 'theme', questions: [{ id: 'custom', text: '管理者が編集した質問', helpText: '独自の補足', enabled: false }] },
+    { id: 'personality-preferences', title: '旧性格', kind: 'personality', enabled: true, questions: [{ id: 'preference-01', text: '旧質問' }] },
+  ] };
+  const migrated = upgradePersonalityQuestions(old);
+  assert.equal(migrated.version, '6.0.0');
+  assert.deepEqual(migrated.sections[0], old.sections[0]);
+  assert.equal(migrated.sections[1].questions[0].text, '旧質問');
+  assert.equal(migrated.sections[1].enabled, false);
+  assert.equal(personalityAnswerCount(migrated, { 'preference-01': '7' }), 0);
+  const guide = migrated.sections.find((s) => s.id === 'episode-guide');
+  guide.questions.pop(); guide.enabled = false;
+  assert.equal(upgradePersonalityQuestions(migrated), migrated);
+});
+
+test('episode fields use the published editable wording, order, and visibility', async () => {
+  const { createEpisodeSection, episodeGuideFields, episodeGuideQuestion } = await import(episodeModule);
+  const guide = createEpisodeSection();
+  const edited = { ...set, sections: [guide] };
+  const q = guide.questions.find((q) => q.id === 'episode-field-scene');
+  q.text = 'ご自身はどんなことをしましたか？'; q.helpText = '編集した補足'; q.order = 1;
+  assert.equal(episodeGuideFields(edited)[0].question.text, q.text);
+  assert.equal(episodeGuideFields(edited)[0].question.helpText, q.helpText);
+  q.enabled = false;
+  assert.ok(!episodeGuideFields(edited).some((f) => f.key === 'scene'));
+  guide.enabled = false;
+  assert.equal(episodeGuideQuestion(edited, 'episode-topic-work'), undefined);
+  assert.equal(episodeGuideFields(edited).length, 0);
+});
+
+test('standard revisions soften memory demands without replacing custom edits', async () => {
+  const { refineStandardWording } = await import(wordingModule);
+  assert.equal(refineStandardWording('大切な人と初めて会った日のことを一つ教えてください。'), '大切な人と知り合ったころのことで、覚えている場面はありますか？');
+  assert.equal(refineStandardWording('独自の質問'), '独自の質問');
 });

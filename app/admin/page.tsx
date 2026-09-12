@@ -15,6 +15,7 @@ import {
 } from '@/lib/initial-question-set';
 import { PUBLISHED_QUESTION_SET_KEY, QUESTION_EDITOR_STORAGE_KEY } from '@/lib/life-story';
 import { AXES, RATING_LABELS, normalizePreference, upgradePersonalityQuestions } from '@/lib/personality';
+import { EPISODE_SECTION_ID } from '@/lib/episode-guide';
 
 type Notice = { tone: 'success' | 'warning' | 'neutral'; message: string } | null;
 
@@ -264,7 +265,7 @@ const legacyInitialQuestionSet: QuestionSet = {
   ],
 };
 
-const STANDARD_MIGRATION_VERSIONS = [legacyInitialQuestionSet.version, '2.0.0', '3.0.0', '4.0.0'];
+const STANDARD_MIGRATION_VERSIONS = [legacyInitialQuestionSet.version, '2.0.0', '3.0.0', '4.0.0', '5.0.0'];
 
 function slugPart(value: string) {
   return value
@@ -435,7 +436,7 @@ export default function Home() {
             setSelectedQuestionId('profile-name');
             setNotice({
               tone: 'success',
-              message: '性格・考え方を20問・7段階へ更新しました。旧設問と編集内容は非表示の旧版セクションとバックアップに保存しています。',
+              message: '答えやすさを見直した第6版へ更新しました。「年表・エピソードの質問」も編集できます。旧性格設問と編集内容は非表示の旧版セクションとバックアップに保存しています。',
             });
           } else if (normalized) {
             setQuestionSet(normalized);
@@ -498,7 +499,7 @@ export default function Home() {
     let errors = 0;
     let warnings = 0;
     let unreviewed = 0;
-    questionSet.sections.forEach((section) => {
+    questionSet.sections.filter((section) => section.enabled).forEach((section) => {
       section.questions.filter((question) => question.enabled).forEach((question) => {
         const issues = issuesForQuestion(question, section);
         errors += issues.errors.length;
@@ -865,7 +866,7 @@ export default function Home() {
                     rows={1}
                   />
                 </div>
-                <button className="button primary compact" onClick={addQuestion}>＋ 設問を追加</button>
+                <button className="button primary compact" disabled={selectedSection.id === EPISODE_SECTION_ID} title={selectedSection.id === EPISODE_SECTION_ID ? '年表の入力欄は固定です。既存の質問文と補足を編集できます。' : undefined} onClick={addQuestion}>＋ 設問を追加</button>
               </div>
 
               <div className="toolbar">
@@ -946,7 +947,7 @@ export default function Home() {
                   <p className="editor-id">ID: {selectedQuestion.id}</p>
                 </div>
                 <div className="editor-heading-actions">
-                  <button onClick={duplicateQuestion} aria-label="設問を複製">⧉</button>
+                  <button onClick={duplicateQuestion} disabled={selectedSection?.id === EPISODE_SECTION_ID} aria-label="設問を複製">⧉</button>
                   <button onClick={() => setSelectedQuestionId('')} aria-label="編集を閉じる">×</button>
                 </div>
               </div>
@@ -981,19 +982,20 @@ export default function Home() {
                     <div className="field-grid">
                       <label>
                         <span>回答形式</span>
-                        <select value={selectedQuestion.answerType} onChange={(event) => updateQuestion({ answerType: event.target.value as AnswerType })}>
+                        <select disabled={selectedSection?.id === EPISODE_SECTION_ID} value={selectedQuestion.answerType} onChange={(event) => updateQuestion({ answerType: event.target.value as AnswerType })}>
                           {Object.entries(ANSWER_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                         </select>
                       </label>
                       <label>
                         <span>回答設定</span>
-                        <select value={selectedQuestion.required ? 'required' : 'optional'} onChange={(event) => updateQuestion({ required: event.target.value === 'required' })}>
+                        <select disabled={selectedSection?.id === EPISODE_SECTION_ID} value={selectedQuestion.required ? 'required' : 'optional'} onChange={(event) => updateQuestion({ required: event.target.value === 'required' })}>
                           <option value="optional">任意</option>
                           <option value="required">必須</option>
                         </select>
                       </label>
                     </div>
 
+                    {selectedSection?.id === EPISODE_SECTION_ID ? <p>年表では入力欄の形式と任意回答を固定しています。質問文・補足・追加質問の順番・表示／非表示を編集できます。公開用を書き出すと、このブラウザの年表に反映されます。</p> : null}
                     {selectedQuestion.answerType === 'rating' ? <fieldset className="option-editor">
                       <legend>7段階・傾向の集計</legend>
                       <p>1＝まったく思わない、4＝どちらともいえない、7＝かなり思う。設問の意味を変えた場合は集計する観点と方向も確認してください。</p>

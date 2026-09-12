@@ -4,7 +4,11 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { TIMELINE_STORAGE_KEY } from '@/lib/life-story';
+import { TIMELINE_STORAGE_KEY, PUBLISHED_QUESTION_SET_KEY, normalizeQuestionSet, readStoredJson } from '@/lib/life-story';
+import { initialQuestionSet, type QuestionSet } from '@/lib/initial-question-set';
+import { upgradePersonalityQuestions } from '@/lib/personality';
+import { EPISODE_TOPICS, episodeGuideQuestion } from '@/lib/episode-guide';
+import { EpisodeInterview } from '@/app/components/episode-interview';
 
 type SchoolType = 'kindergarten' | 'nursery' | 'elementary' | 'juniorHigh' | 'highSchool' | 'university' | 'graduate' | 'other';
 
@@ -96,17 +100,7 @@ const SCHOOL_TYPES = Object.keys(SCHOOL_LABELS) as SchoolType[];
 const EMPTY_SCHOOL_MARKERS: SchoolMarker[] = [];
 const EMPTY_EPISODES: Episode[] = [];
 
-const TOPIC_DEFINITIONS: Record<EpisodeTopic, { label: string; icon: string; hint: string; prompt: string }> = {
-  school: { label: '学校・学び', icon: '学', hint: '先生、授業、行事、進路', prompt: '先生や授業、学校行事、進路など、心に残っている出来事は何ですか？' },
-  family: { label: '家族', icon: '家', hint: '両親、きょうだい、親戚', prompt: '家族との時間で、今も覚えている場面や言葉は何ですか？' },
-  friends: { label: '友人・出会い', icon: '友', hint: '友達、恩人、別れ', prompt: 'その人とどのように出会い、どんな出来事を一緒に経験しましたか？' },
-  home: { label: '暮らし・場所', icon: '暮', hint: '家、町、引っ越し、日常', prompt: '当時の家や町、毎日の暮らしで、よく覚えていることは何ですか？' },
-  work: { label: '仕事', icon: '仕', hint: '就職、職場、役割、成果', prompt: '仕事で任されたこと、苦労したこと、誇りに思ったことは何ですか？' },
-  health: { label: '健康・病気', icon: '健', hint: '体調、療養、回復、支え', prompt: '体や心の変化と、その時に支えになった人や出来事を教えてください。' },
-  interest: { label: '趣味・夢', icon: '好', hint: '好きなこと、習い事、目標', prompt: '夢中になったことは何で、どのように始まりましたか？' },
-  challenge: { label: '挑戦・転機', icon: '転', hint: '決断、成功、失敗、変化', prompt: '何を決め、何が変わりましたか？決断のきっかけも思い出してください。' },
-  other: { label: 'その他', icon: '他', hint: '自由な話題', prompt: 'この年齢を語るうえで欠かせない出来事を、自由に記録してください。' },
-};
+const TOPIC_DEFINITIONS = EPISODE_TOPICS;
 
 const TOPIC_TYPES = Object.keys(TOPIC_DEFINITIONS) as EpisodeTopic[];
 
@@ -392,6 +386,7 @@ const AgeTimelineRow = memo(function AgeTimelineRow({ age, period, note, markers
 });
 
 export default function TimelinePage() {
+  const [questionSet, setQuestionSet] = useState<QuestionSet>(initialQuestionSet);
   const [timeline, setTimeline] = useState<TimelineData>(emptyTimeline);
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('saved');
@@ -400,6 +395,15 @@ export default function TimelinePage() {
   const [topicPickerAge, setTopicPickerAge] = useState<number | null>(null);
   const [selectedEpisodeId, setSelectedEpisodeId] = useState('');
   const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        setQuestionSet(upgradePersonalityQuestions(normalizeQuestionSet(readStoredJson(PUBLISHED_QUESTION_SET_KEY)) ?? initialQuestionSet));
+      } catch { /* 読めない設問データは標準版で表示し、年表の回答は変更しない。 */ }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -759,7 +763,7 @@ export default function TimelinePage() {
             </div>
             <p className="topic-picker-lead">具体的に思い出したい話題をタップしてください。選ぶと、個別のエピソードを深掘りする画面が開きます。</p>
             <div className="episode-topic-grid">
-              {TOPIC_TYPES.map((topic) => {
+              {TOPIC_TYPES.filter((topic) => episodeGuideQuestion(questionSet, `episode-topic-${topic}`)).map((topic) => {
                 const definition = TOPIC_DEFINITIONS[topic];
                 return (
                   <button key={topic} onClick={() => addEpisode(topic)}>
@@ -771,6 +775,7 @@ export default function TimelinePage() {
                 );
               })}
             </div>
+            {!TOPIC_TYPES.some((topic) => episodeGuideQuestion(questionSet, `episode-topic-${topic}`)) ? <p>表示できる話題がありません。管理画面の「年表・エピソードの質問」を確認してください。年齢ごとのメモは引き続き入力できます。</p> : null}
           </div>
         </div>
       ) : null}
@@ -789,30 +794,10 @@ export default function TimelinePage() {
             <div className="episode-editor-scroll">
               <div className="episode-guide">
                 <span className={`topic-icon ${selectedEpisode.topic}`}>{selectedEpisodeTopic.icon}</span>
-                <div><strong>{selectedEpisodeTopic.label}</strong><p>{selectedEpisodeTopic.prompt}</p></div>
+                <div><strong>{selectedEpisodeTopic.label}</strong><p>{episodeGuideQuestion(questionSet, `episode-topic-${selectedEpisode.topic}`)?.text ?? '書きたいことを、書ける範囲で残してください。'}</p></div>
               </div>
 
-              <div className="episode-form-section">
-                <div className="episode-section-title"><span>1</span><div><strong>出来事を特定する</strong><small>まず、誰とどこで何があったかを整理します</small></div></div>
-                <label><span>エピソードの見出し</span><input value={selectedEpisode.title} onChange={(event) => updateEpisode({ title: event.target.value })} placeholder="例：運動会で初めてリレーの選手になった" /></label>
-                <div className="episode-field-grid">
-                  <label><span>いつ・どこで</span><input value={selectedEpisode.whenWhere} onChange={(event) => updateEpisode({ whenWhere: event.target.value })} placeholder="季節、学年、場所など" /></label>
-                  <label><span>一緒にいた人</span><input value={selectedEpisode.people} onChange={(event) => updateEpisode({ people: event.target.value })} placeholder="名前やご自身との関係" /></label>
-                </div>
-                <label><span>何が起きましたか？</span><textarea rows={5} value={selectedEpisode.whatHappened} onChange={(event) => updateEpisode({ whatHappened: event.target.value })} placeholder="出来事を、起きた順番に沿って書いてください。" /></label>
-              </div>
-
-              <div className="episode-form-section">
-                <div className="episode-section-title"><span>2</span><div><strong>その場面を思い出す</strong><small>人柄が伝わる具体的な記憶を残します</small></div></div>
-                <label><span>目に浮かぶ場面や言葉</span><textarea rows={4} value={selectedEpisode.scene} onChange={(event) => updateEpisode({ scene: event.target.value })} placeholder="景色、音、表情、誰かが言った言葉など" /></label>
-                <label><span>そのとき、どう感じましたか？</span><textarea rows={3} value={selectedEpisode.feeling} onChange={(event) => updateEpisode({ feeling: event.target.value })} placeholder="うれしい、悔しい、怖い、ほっとした、など当時の気持ち" /></label>
-              </div>
-
-              <div className="episode-form-section reflection">
-                <div className="episode-section-title"><span>3</span><div><strong>人生の中での意味を考える</strong><small>今の自分につながる部分を見つけます</small></div></div>
-                <label><span>今振り返ると、どう思いますか？</span><textarea rows={3} value={selectedEpisode.reflection} onChange={(event) => updateEpisode({ reflection: event.target.value })} placeholder="当時は分からなかったこと、今だから思うこと" /></label>
-                <label><span>その後に影響したこと</span><textarea rows={3} value={selectedEpisode.impact} onChange={(event) => updateEpisode({ impact: event.target.value })} placeholder="考え方、進路、人との関わり、今も続く習慣など" /></label>
-              </div>
+              <EpisodeInterview key={selectedEpisode.id} episode={selectedEpisode} questionSet={questionSet} onChange={updateEpisode} />
             </div>
             <div className="episode-editor-footer">
               <button className="button danger" onClick={removeEpisode}>このエピソードを削除</button>

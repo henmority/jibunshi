@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { FlowHeader } from '@/app/components/flow-header';
 import { initialQuestionSet, type Question, type QuestionSet } from '@/lib/initial-question-set';
-import { personalityQuestions, ratingValue, RATING_LABELS, summarizePersonality, upgradePersonalityQuestions } from '@/lib/personality';
+import { personalityQuestions, personalityAnswerCount, ratingValue, RATING_LABELS, summarizePersonality, upgradePersonalityQuestions, UNSURE_ANSWER, UNSURE_LABEL } from '@/lib/personality';
 import {
   DIAGNOSIS_STORAGE_KEY,
   PUBLISHED_QUESTION_SET_KEY,
@@ -74,7 +74,8 @@ export default function DiagnosisPage() {
   }, [diagnosis, hydrated]);
 
   const questions = useMemo(() => personalityQuestions(questionSet), [questionSet]);
-  const answeredCount = questions.filter((question) => question.answerType === 'rating' ? ratingValue(diagnosis.answers[question.id]) !== null : isAnswered(diagnosis.answers[question.id])).length;
+  const answeredCount = personalityAnswerCount(questionSet, diagnosis.answers);
+  const hasPreviousAnswers = Object.keys(diagnosis.answers).some((id) => id.startsWith('preference-') && !id.startsWith('preference-v2-') && isAnswered(diagnosis.answers[id]));
   const profile = useMemo(() => summarizePersonality(questionSet, diagnosis.answers), [questionSet, diagnosis.answers]);
 
   function updateAnswer(questionId: string, value: AnswerValue) {
@@ -109,8 +110,9 @@ export default function DiagnosisPage() {
             <span className="scale-dot" aria-hidden="true">{index + 1}</span><span className="scale-wording">{label}</span>
           </label>
         ))}</div>
-        <div className="preference-scale-caption"><span>{selected ? `選択中：${RATING_LABELS[selected - 1]}` : '近いものを一つ選んでください'}</span>
-          {selected ? <button type="button" onClick={() => updateAnswer(question.id, '')}>回答を取り消す</button> : null}</div>
+        <label className="preference-unsure"><input type="radio" name={question.id} value={UNSURE_ANSWER} checked={diagnosis.answers[question.id] === UNSURE_ANSWER} onChange={() => updateAnswer(question.id, UNSURE_ANSWER)} /><span>{UNSURE_LABEL}</span></label>
+        <div className="preference-scale-caption"><span>{selected ? `選択中：${RATING_LABELS[selected - 1]}` : diagnosis.answers[question.id] === UNSURE_ANSWER ? '判断保留（点数には含めません）' : '近いものを一つ選んでください'}</span>
+          {isAnswered(diagnosis.answers[question.id]) ? <button type="button" onClick={() => updateAnswer(question.id, '')}>回答を取り消す</button> : null}</div>
       </fieldset>;
     }
     if (question.answerType === 'multiple_choice') {
@@ -156,7 +158,8 @@ export default function DiagnosisPage() {
       </section>
 
       <section className="diagnosis-main">
-        <div className="diagnosis-intro"><span>答え方</span><p>ここ数年の普段の自分を思い浮かべ、「そうありたい姿」よりも、無理なく自然にとる行動で答えてください。1「まったく思わない」から7「かなり思う」の7段階です。場面によって違うときは4「どちらともいえない」、経験がなく判断できないときは未回答で構いません。</p></div>
+        <div className="diagnosis-intro"><span>答え方</span><p>ここ数年の普段の自分を思い浮かべ、「そうありたい姿」よりも、無理なく自然にとる行動で答えてください。1「まったく思わない」から7「かなり思う」の7段階です。場面によって違うときは4「どちらともいえない」、経験がなく選べないときは「判断できない・経験がない」を選べます。</p></div>
+        {hasPreviousAnswers ? <p className="preference-note">質問を改訂しました。以前の回答は保存したまま、新しい20問には改めて回答できます。旧回答は今回の集計には含めません。</p> : null}
         <p className="preference-note">MBTIの4つの観点を参考にした独自の設問です。正式なMBTI検査ではなく、16タイプや能力の優劣は判定しません。</p>
         <div className="diagnosis-question-list">
           {questions.map((question, index) => (
@@ -168,14 +171,16 @@ export default function DiagnosisPage() {
         </div>
         <section className="preference-results" aria-labelledby="preference-results-title">
           <p className="flow-eyebrow">YOUR PREFERENCES</p><h2 id="preference-results-title">回答から見える、4つの傾向</h2>
-          <p>各観点の回答がそろうと表示します。どちらがよいという違いではなく、今の自己認識の目安です。</p>
+          <p>各観点の項目をすべて確認し、7段階で答えたものが3問以上あれば目安を表示します。「判断できない」は点数に含めません。どちらがよいという違いではなく、今の自己認識の目安です。</p>
           <div className="preference-result-grid">{profile.axes.map((axis) => <article key={axis.id}>
-            <div className="preference-result-heading"><h3>{axis.title}</h3><small>{axis.answered} / {axis.total}問</small></div>
+            <div className="preference-result-heading"><h3>{axis.title}</h3><small>回答 {axis.answered} / {axis.total}問{axis.skipped ? `・判断保留 ${axis.skipped}問` : ''}</small></div>
             <strong>{axis.summary}</strong>
             <div className="preference-track" aria-hidden="true"><span />{axis.position !== null ? <i style={{ left: `${axis.position}%` }} /> : null}</div>
             <div className="preference-poles"><span>{axis.left}</span><span>{axis.right}</span></div>
           </article>)}</div>
           <p className="preference-note">人生史では、これらを本人が感じる傾向として扱います。実際のエピソードと異なる場合は、その場面での行動や気持ちを大切にします。</p>
+          <p>思い当たる出来事があれば、年表から一つ選んで書き足せます。結果と違う行動をした場面も、その人らしさの一部です。</p>
+          <a className="button secondary" href="/timeline">年表でエピソードを書き足す</a>
         </section>
         <section className="flow-next-card">
           <div><small>STEP 4</small><h2>入力内容から、人生史の原稿へ</h2><p>年表・エピソード・性格や考え方を一つのJSONにまとめ、AIへ送る前に確認できます。</p></div>
