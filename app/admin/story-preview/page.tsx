@@ -5,6 +5,7 @@
 import { ChangeEvent, useMemo, useRef, useState } from 'react';
 
 import { initialQuestionSet } from '@/lib/initial-question-set';
+import { personalityAnswerCount, personalityNoteCount } from '@/lib/personality';
 import {
   createLifeStoryBundle,
   downloadJson,
@@ -28,7 +29,8 @@ export default function AdminStoryPreviewPage() {
   const counts = useMemo(() => ({
     events: bundle?.timeline ? Object.values(bundle.timeline.eventsByAge).filter((value) => value.trim()).length : 0,
     episodes: bundle?.timeline?.episodes.length ?? 0,
-    answers: bundle?.diagnosis ? Object.values(bundle.diagnosis.answers).filter((value) => Array.isArray(value) ? value.length : value.trim()).length : 0,
+    answers: bundle?.diagnosis ? personalityAnswerCount(bundle.questionSet ?? initialQuestionSet, bundle.diagnosis.answers) : 0,
+    notes: personalityNoteCount(bundle?.questionSet ?? initialQuestionSet, bundle?.diagnosis),
   }), [bundle]);
 
   function handleImport(event: ChangeEvent<HTMLInputElement>) {
@@ -108,7 +110,7 @@ export default function AdminStoryPreviewPage() {
       <section className="admin-preview-workspace">
         <aside className="admin-preview-source">
           <div className="admin-file-card"><span>{bundle ? '✓' : 'JSON'}</span><div><strong>{fileName || 'ファイルが未選択です'}</strong><small>{bundle?.timeline?.subjectName || '利用者の統合JSONを読み込んでください'}</small></div></div>
-          {bundle ? <div className="admin-source-counts"><div><strong>{counts.events}</strong><span>年齢メモ</span></div><div><strong>{counts.episodes}</strong><span>エピソード</span></div><div><strong>{counts.answers}</strong><span>診断回答</span></div></div> : null}
+          {bundle ? <div className="admin-source-counts"><div><strong>{counts.events}</strong><span>年齢メモ</span></div><div><strong>{counts.episodes}</strong><span>エピソード</span></div><div><strong>{counts.answers}</strong><span>選択回答・自由記述{counts.notes}件</span></div></div> : null}
           <label className="admin-instruction"><span>今回だけ追加する指示</span><textarea rows={7} value={instruction} onChange={(event) => setInstruction(event.target.value)} placeholder="例：仕事の章を短くし、家族とのエピソードを中心に構成する" /><small>共通の安全ルールや「事実を作らない」という指示は自動で適用されます。</small></label>
           <button className="button primary" disabled={!bundle || generating} onClick={generatePreview}>{generating ? 'AIが原稿を作成しています…' : 'このJSONからAI原稿を作る'}</button>
           {bundle ? <details className="json-preview admin-json"><summary>読み込んだJSONを確認</summary><pre>{JSON.stringify(bundle, null, 2)}</pre></details> : null}

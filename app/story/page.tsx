@@ -4,7 +4,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { FlowHeader } from '@/app/components/flow-header';
 import { initialQuestionSet, type QuestionSet } from '@/lib/initial-question-set';
-import { personalityAnswerCount, upgradePersonalityQuestions } from '@/lib/personality';
+import { personalityAnswerCount, personalityNoteCount, upgradePersonalityQuestions } from '@/lib/personality';
 import {
   DIAGNOSIS_STORAGE_KEY,
   PUBLISHED_QUESTION_SET_KEY,
@@ -69,6 +69,7 @@ export default function StoryPage() {
   const eventCount = timeline ? Object.values(timeline.eventsByAge).filter((value) => value.trim()).length : 0;
   const episodeCount = timeline?.episodes.length ?? 0;
   const diagnosisCount = diagnosis ? personalityAnswerCount(questionSet, diagnosis.answers) : 0;
+  const diagnosisNotes = personalityNoteCount(questionSet, diagnosis);
   const canGenerate = Boolean(timeline && (eventCount || episodeCount));
 
   function persistImported(imported: LifeStoryBundle) {
@@ -170,7 +171,7 @@ export default function StoryPage() {
           <div className="story-readiness-list">
             <a className={timeline?.subjectName && timeline.birthDate ? 'ready' : ''} href="/timeline"><span>{timeline?.subjectName && timeline.birthDate ? '✓' : '1'}</span><div><strong>基本情報</strong><small>{timeline?.subjectName || '名前が未入力'}</small></div><b>›</b></a>
             <a className={eventCount || episodeCount ? 'ready' : ''} href="/timeline"><span>{eventCount || episodeCount ? '✓' : '2'}</span><div><strong>年表・エピソード</strong><small>{eventCount + episodeCount}件の記録</small></div><b>›</b></a>
-            <a className={diagnosisCount ? 'ready' : ''} href="/diagnosis"><span>{diagnosisCount ? '✓' : '3'}</span><div><strong>性格・考え方</strong><small>{diagnosisCount}問回答</small></div><b>›</b></a>
+            <a className={diagnosisCount || diagnosisNotes ? 'ready' : ''} href="/diagnosis"><span>{diagnosisCount || diagnosisNotes ? '✓' : '3'}</span><div><strong>性格・考え方</strong><small>{diagnosisCount}問回答・自由記述{diagnosisNotes}件</small></div><b>›</b></a>
           </div>
           <details className="json-preview"><summary>AIへ送るJSONを見る</summary><pre>{JSON.stringify(bundle, null, 2)}</pre></details>
           <div className="story-data-actions">

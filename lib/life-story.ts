@@ -50,6 +50,8 @@ export type DiagnosisData = {
   questionSetId: string;
   questionSetVersion: string;
   answers: Record<string, AnswerValue>;
+  answerNotes?: Record<string, string>;
+  selfDescription?: string;
   updatedAt: string;
 };
 
@@ -163,11 +165,18 @@ export function normalizeDiagnosisData(value: unknown): DiagnosisData | null {
       if (normalized !== null) answers[questionId] = normalized;
     });
   }
+  const answerNotes: Record<string, string> = {};
+  const rawNotes = objectValue(data.answerNotes);
+  if (rawNotes) Object.entries(rawNotes).slice(0, 300).forEach(([id, note]) => {
+    if (typeof note === 'string') answerNotes[id] = note.slice(0, 4000);
+  });
   return {
     schemaVersion: 1,
     questionSetId: stringValue(data.questionSetId),
     questionSetVersion: stringValue(data.questionSetVersion),
     answers,
+    answerNotes,
+    selfDescription: stringValue(data.selfDescription).slice(0, 12000),
     updatedAt: stringValue(data.updatedAt),
   };
 }

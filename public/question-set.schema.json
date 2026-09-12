@@ -59,6 +59,15 @@
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1, "maxLength": 100 }
         },
+        "comparison": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["left", "right"],
+          "properties": {
+            "left": { "type": "string", "minLength": 1, "maxLength": 160 },
+            "right": { "type": "string", "minLength": 1, "maxLength": 160 }
+          }
+        },
         "preference": {
           "type": "object",
           "additionalProperties": false,

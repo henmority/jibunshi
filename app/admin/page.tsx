@@ -14,7 +14,7 @@ import {
   type SectionKind,
 } from '@/lib/initial-question-set';
 import { PUBLISHED_QUESTION_SET_KEY, QUESTION_EDITOR_STORAGE_KEY } from '@/lib/life-story';
-import { AXES, RATING_LABELS, normalizePreference, upgradePersonalityQuestions } from '@/lib/personality';
+import { AXES, questionRatingLabels, normalizeComparison, normalizePreference, upgradePersonalityQuestions } from '@/lib/personality';
 import { EPISODE_SECTION_ID } from '@/lib/episode-guide';
 
 type Notice = { tone: 'success' | 'warning' | 'neutral'; message: string } | null;
@@ -265,7 +265,7 @@ const legacyInitialQuestionSet: QuestionSet = {
   ],
 };
 
-const STANDARD_MIGRATION_VERSIONS = [legacyInitialQuestionSet.version, '2.0.0', '3.0.0', '4.0.0', '5.0.0'];
+const STANDARD_MIGRATION_VERSIONS = [legacyInitialQuestionSet.version, '2.0.0', '3.0.0', '4.0.0', '5.0.0', '6.0.0'];
 
 function slugPart(value: string) {
   return value
@@ -283,6 +283,7 @@ function issuesForQuestion(question: Question, section: Section) {
   const errors: string[] = [];
   const warnings: string[] = [];
   if (!question.text.trim()) errors.push('設問文が入力されていません。');
+  if (question.comparison && !normalizeComparison(question.comparison)) errors.push('AとBの考え方を両方入力してください。');
   if (!/^[a-z0-9][a-z0-9-]*$/.test(question.id)) errors.push('IDは半角英数字とハイフンで入力してください。');
   if (['single_choice', 'multiple_choice'].includes(question.answerType)) {
     const options = (question.options ?? []).map((option) => option.trim()).filter(Boolean);
@@ -332,6 +333,7 @@ function publicQuestionSet(questionSet: QuestionSet) {
             enabled: question.enabled,
             ...(question.options ? { options: question.options } : {}),
             ...(question.preference ? { preference: question.preference } : {}),
+            ...(question.comparison ? { comparison: question.comparison } : {}),
           })),
       })),
   };
@@ -386,6 +388,7 @@ function normalizeImportedData(value: unknown): QuestionSet | null {
                   : 'unreviewed',
                 options: Array.isArray(question.options) ? question.options.map(String) : undefined,
                 preference: normalizePreference(question.preference),
+                comparison: normalizeComparison(question.comparison),
                 intent: String(question.intent || ''),
                 aiOriginalText: String(question.aiOriginalText || question.text || ''),
                 reviewMemo: String(question.reviewMemo || ''),
@@ -436,7 +439,7 @@ export default function Home() {
             setSelectedQuestionId('profile-name');
             setNotice({
               tone: 'success',
-              message: '答えやすさを見直した第6版へ更新しました。「年表・エピソードの質問」も編集できます。旧性格設問と編集内容は非表示の旧版セクションとバックアップに保存しています。',
+              message: '第7版の場面比較20問へ更新しました。A/Bの文言も編集できます。旧性格設問と編集内容は非表示の旧版セクションとバックアップに保存しています。',
             });
           } else if (normalized) {
             setQuestionSet(normalized);
@@ -756,7 +759,7 @@ export default function Home() {
     if (question.answerType === 'date') return <input className="preview-text-input" type="date" />;
     if (question.answerType === 'year_month') return <input className="preview-text-input" type="month" />;
     if (question.answerType === 'rating') {
-      return <div className="rating-row">{RATING_LABELS.map((label, index) => <button key={label} title={label}>{index + 1}</button>)}</div>;
+      return <>{question.comparison ? <div className="preference-comparison"><p><b>A</b>{question.comparison.left}</p><p><b>B</b>{question.comparison.right}</p></div> : null}<div className="rating-row">{questionRatingLabels(question).map((label, index) => <button key={label} title={label}>{index + 1}</button>)}</div><p>利用者画面には、選んだ理由を自由に書ける欄も表示されます。</p></>;
     }
     if (question.answerType === 'short_text') return <input className="preview-text-input" placeholder="ここに入力してください" />;
     return (
@@ -998,11 +1001,15 @@ export default function Home() {
                     {selectedSection?.id === EPISODE_SECTION_ID ? <p>年表では入力欄の形式と任意回答を固定しています。質問文・補足・追加質問の順番・表示／非表示を編集できます。公開用を書き出すと、このブラウザの年表に反映されます。</p> : null}
                     {selectedQuestion.answerType === 'rating' ? <fieldset className="option-editor">
                       <legend>7段階・傾向の集計</legend>
-                      <p>1＝まったく思わない、4＝どちらともいえない、7＝かなり思う。設問の意味を変えた場合は集計する観点と方向も確認してください。</p>
+                      <p>{selectedQuestion.comparison ? '1＝Aにとても近い、4＝どちらも同じくらい、7＝Bにとても近い。' : '1＝まったく思わない、4＝どちらともいえない、7＝かなり思う。'}設問の意味を変えた場合は集計する観点と方向も確認してください。</p>
+                      {selectedQuestion.comparison ? <>
+                        <label><span>Aの考え方</span><textarea maxLength={160} value={selectedQuestion.comparison.left} onChange={(e) => updateQuestion({ comparison: { ...selectedQuestion.comparison!, left: e.target.value } })} /></label>
+                        <label><span>Bの考え方</span><textarea maxLength={160} value={selectedQuestion.comparison.right} onChange={(e) => updateQuestion({ comparison: { ...selectedQuestion.comparison!, right: e.target.value } })} /></label>
+                      </> : null}
                       <label><span>集計する観点</span><select value={selectedQuestion.preference?.axis ?? ''} onChange={(event) => updateQuestion({ preference: event.target.value ? { axis: event.target.value as typeof AXES[number]['id'], direction: selectedQuestion.preference?.direction ?? 1 } : undefined })}>
                         <option value="">集計しない</option>{AXES.map((axis) => <option value={axis.id} key={axis.id}>{axis.title}</option>)}
                       </select></label>
-                      {selectedQuestion.preference ? <label><span>「かなり思う」の向き</span><select value={selectedQuestion.preference.direction} onChange={(event) => updateQuestion({ preference: { ...selectedQuestion.preference!, direction: Number(event.target.value) as -1 | 1 } })}>
+                      {selectedQuestion.preference ? <label><span>{selectedQuestion.comparison ? '「Bに近い」の向き' : '「かなり思う」の向き'}</span><select value={selectedQuestion.preference.direction} onChange={(event) => updateQuestion({ preference: { ...selectedQuestion.preference!, direction: Number(event.target.value) as -1 | 1 } })}>
                         <option value={-1}>{AXES.find((axis) => axis.id === selectedQuestion.preference?.axis)?.left}</option>
                         <option value={1}>{AXES.find((axis) => axis.id === selectedQuestion.preference?.axis)?.right}</option>
                       </select></label> : null}

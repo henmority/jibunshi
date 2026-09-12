@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { FlowHeader } from '@/app/components/flow-header';
 import { initialQuestionSet, type Question, type QuestionSet } from '@/lib/initial-question-set';
-import { personalityQuestions, personalityAnswerCount, ratingValue, RATING_LABELS, summarizePersonality, upgradePersonalityQuestions, UNSURE_ANSWER, UNSURE_LABEL } from '@/lib/personality';
+import { AXES, personalityQuestions, personalityAnswerCount, ratingValue, questionRatingLabels, normalizeComparison, summarizePersonality, upgradePersonalityQuestions, UNSURE_ANSWER, UNSURE_LABEL } from '@/lib/personality';
 import {
   DIAGNOSIS_STORAGE_KEY,
   PUBLISHED_QUESTION_SET_KEY,
@@ -75,21 +75,26 @@ export default function DiagnosisPage() {
 
   const questions = useMemo(() => personalityQuestions(questionSet), [questionSet]);
   const answeredCount = personalityAnswerCount(questionSet, diagnosis.answers);
-  const hasPreviousAnswers = Object.keys(diagnosis.answers).some((id) => id.startsWith('preference-') && !id.startsWith('preference-v2-') && isAnswered(diagnosis.answers[id]));
+  const hasPreviousAnswers = Object.keys(diagnosis.answers).some((id) => id.startsWith('preference-') && !id.startsWith('preference-v3-') && isAnswered(diagnosis.answers[id]));
+  const noteCount = questions.filter((q) => diagnosis.answerNotes?.[q.id]?.trim()).length;
   const profile = useMemo(() => summarizePersonality(questionSet, diagnosis.answers), [questionSet, diagnosis.answers]);
 
-  function updateAnswer(questionId: string, value: AnswerValue) {
+  function updateDiagnosis(patch: Partial<DiagnosisData>) {
     const next: DiagnosisData = {
       ...diagnosis,
       questionSetId: questionSet.questionSetId,
       questionSetVersion: questionSet.version,
-      answers: { ...diagnosis.answers, [questionId]: value },
+      ...patch,
       updatedAt: new Date().toISOString(),
     };
     setDiagnosis(next);
     // 通常のページ移動をすぐ行っても、最後の選択を失わないよう同期保存する。
     try { localStorage.setItem(DIAGNOSIS_STORAGE_KEY, JSON.stringify(next)); setSaveState('saved'); }
     catch { setSaveState('failed'); }
+  }
+
+  function updateAnswer(questionId: string, value: AnswerValue) {
+    updateDiagnosis({ answers: { ...diagnosis.answers, [questionId]: value } });
   }
 
   function toggleOption(question: Question, option: string) {
@@ -101,17 +106,20 @@ export default function DiagnosisPage() {
   function renderAnswer(question: Question) {
     if (question.answerType === 'rating') {
       const selected = ratingValue(diagnosis.answers[question.id]);
+      const labels = questionRatingLabels(question);
+      const comparison = normalizeComparison(question.comparison);
       return <fieldset className="preference-scale" disabled={!hydrated}>
         <legend className="sr-only">{question.text}への回答</legend>
-        <div className="preference-scale-endpoints" aria-hidden="true"><span>まったく思わない</span><span>かなり思う</span></div>
-        <div className="preference-scale-options">{RATING_LABELS.map((label, index) => (
+        {comparison ? <div className="preference-comparison"><p><b>A</b>{comparison.left}</p><p><b>B</b>{comparison.right}</p></div> : null}
+        <div className="preference-scale-endpoints" aria-hidden="true"><span>{comparison ? 'Aに近い' : 'まったく思わない'}</span><span>{comparison ? 'Bに近い' : 'かなり思う'}</span></div>
+        <div className="preference-scale-options">{labels.map((label, index) => (
           <label key={label} className={selected === index + 1 ? 'selected' : ''}>
             <input type="radio" aria-label={label} name={question.id} value={index + 1} checked={selected === index + 1} onChange={() => updateAnswer(question.id, String(index + 1))} />
             <span className="scale-dot" aria-hidden="true">{index + 1}</span><span className="scale-wording">{label}</span>
           </label>
         ))}</div>
         <label className="preference-unsure"><input type="radio" name={question.id} value={UNSURE_ANSWER} checked={diagnosis.answers[question.id] === UNSURE_ANSWER} onChange={() => updateAnswer(question.id, UNSURE_ANSWER)} /><span>{UNSURE_LABEL}</span></label>
-        <div className="preference-scale-caption"><span>{selected ? `選択中：${RATING_LABELS[selected - 1]}` : diagnosis.answers[question.id] === UNSURE_ANSWER ? '判断保留（点数には含めません）' : '近いものを一つ選んでください'}</span>
+        <div className="preference-scale-caption"><span>{selected ? `選択中：${labels[selected - 1]}` : diagnosis.answers[question.id] === UNSURE_ANSWER ? '判断保留（点数には含めません）' : '近いものを一つ選んでください'}</span>
           {isAnswered(diagnosis.answers[question.id]) ? <button type="button" onClick={() => updateAnswer(question.id, '')}>回答を取り消す</button> : null}</div>
       </fieldset>;
     }
@@ -153,22 +161,39 @@ export default function DiagnosisPage() {
     <main className="flow-shell subpage-shell">
       <FlowHeader active="diagnosis" />
       <section className="subpage-hero diagnosis-hero">
-        <div><p className="flow-eyebrow">STEP 3 — PERSONALITY & VALUES</p><h1>いつもの選び方に、<br />あなたらしさがある。</h1><p>{questions.length}問の短い設問から、人との関わり、情報の受け取り方、判断の基準、物事の進め方を振り返ります。</p></div>
+        <div><p className="flow-eyebrow">STEP 3 — PERSONALITY & VALUES</p><h1>あなたなら、<br />どう考えますか。</h1><p>{questions.length}の場面から、自然に選ぶ考え方を振り返ります。7段階の選択と、自分の言葉の両方で残せます。</p></div>
         <div className="diagnosis-progress"><span>回答済み</span><strong>{answeredCount}<small> / {questions.length}問</small></strong><div><i style={{ width: `${questions.length ? (answeredCount / questions.length) * 100 : 0}%` }} /></div><p className={`save-state ${saveState}`}><i />{saveState === 'saved' ? '保存済み' : saveState === 'saving' ? '保存中…' : '保存失敗'}</p></div>
       </section>
 
       <section className="diagnosis-main">
-        <div className="diagnosis-intro"><span>答え方</span><p>ここ数年の普段の自分を思い浮かべ、「そうありたい姿」よりも、無理なく自然にとる行動で答えてください。1「まったく思わない」から7「かなり思う」の7段階です。場面によって違うときは4「どちらともいえない」、経験がなく選べないときは「判断できない・経験がない」を選べます。</p></div>
+        <div className="diagnosis-intro"><span>答え方</span><p>AとBのどちらも選べるとしたら、今の自分はどちらに近いでしょうか。1「Aにとても近い」〜7「Bにとても近い」で選んでください。4は「どちらも同じくらい」。どちらも合わない・経験がない場合は「判断できない・経験がない」を選び、理由だけ書くこともできます。正解や望ましい答えはありません。</p></div>
+        {questions.some((q) => q.answerType === 'rating' && !normalizeComparison(q.comparison)) ? <p className="preference-note">A/Bの表示がない設問は、1「まったく思わない」〜7「かなり思う」で回答します。</p> : null}
         {hasPreviousAnswers ? <p className="preference-note">質問を改訂しました。以前の回答は保存したまま、新しい20問には改めて回答できます。旧回答は今回の集計には含めません。</p> : null}
-        <p className="preference-note">MBTIの4つの観点を参考にした独自の設問です。正式なMBTI検査ではなく、16タイプや能力の優劣は判定しません。</p>
+        <p className="preference-note">MBTIの4つの観点を参考にした独自の自己理解シートです。正式な検査・検証済みの尺度ではなく、16タイプや能力の優劣は判定しません。</p>
+        <p className="preference-note" role="status">選択回答 {answeredCount}問・理由のメモ {noteCount}問{diagnosis.selfDescription?.trim() ? '・自由記述あり' : ''}。文章だけでも保存できます。</p>
         <div className="diagnosis-question-list">
           {questions.map((question, index) => (
             <article className={`diagnosis-question ${isAnswered(diagnosis.answers[question.id]) ? 'answered' : ''}`} key={question.id}>
               <div className="diagnosis-question-number"><span>{String(index + 1).padStart(2, '0')}</span>{isAnswered(diagnosis.answers[question.id]) ? <b>回答済み</b> : null}</div>
-              <div className="diagnosis-question-body"><h2>{question.text}</h2>{question.helpText ? <p>{question.helpText}</p> : null}{renderAnswer(question)}</div>
+              <div className="diagnosis-question-body">
+                {question.preference ? <span className="preference-axis-label">{AXES.find((axis) => axis.id === question.preference?.axis)?.title}</span> : null}
+                <h2>{question.text}</h2>{question.helpText ? <p>{question.helpText}</p> : null}{renderAnswer(question)}
+                <details className="preference-reason"><summary>自分の考えや理由を書く（任意）{diagnosis.answerNotes?.[question.id]?.trim() ? '・記入済み' : ''}</summary>
+                  <label htmlFor={`reason-${question.id}`}>この場面で、あなたはどう考えますか？</label>
+                  <p id={`reason-help-${question.id}`}>選んだ理由、場面による違い、思い当たる経験などを自由に。「仕事ではA、家ではB」など短い言葉でも構いません。</p>
+                  <textarea id={`reason-${question.id}`} aria-describedby={`reason-help-${question.id}`} disabled={!hydrated} rows={4} maxLength={4000} value={diagnosis.answerNotes?.[question.id] ?? ''} onChange={(e) => updateDiagnosis({ answerNotes: { ...diagnosis.answerNotes, [question.id]: e.target.value } })} />
+                </details>
+              </div>
             </article>
           ))}
         </div>
+        <section className="preference-free-writing" aria-labelledby="free-writing-title">
+          <p className="flow-eyebrow">IN YOUR OWN WORDS</p><h2 id="free-writing-title">選択肢では伝えきれない、あなたの考え</h2>
+          <p id="self-description-help">人と意見が違うときに大切にすること、昔と今で変わった考え方、自分らしいと思う行動など。書きたいことだけで構いません。</p>
+          <label htmlFor="self-description">自分の考え方・性格について自由に書いてください（任意）</label>
+          <textarea id="self-description" aria-describedby="self-description-help" disabled={!hydrated} rows={6} maxLength={12000} value={diagnosis.selfDescription ?? ''} onChange={(e) => updateDiagnosis({ selfDescription: e.target.value })} />
+          <p className="preference-note">文章は点数には換算しません。人生史を作るAIには、選択回答と一緒に本人の説明として渡します。</p>
+        </section>
         <section className="preference-results" aria-labelledby="preference-results-title">
           <p className="flow-eyebrow">YOUR PREFERENCES</p><h2 id="preference-results-title">回答から見える、4つの傾向</h2>
           <p>各観点の項目をすべて確認し、7段階で答えたものが3問以上あれば目安を表示します。「判断できない」は点数に含めません。どちらがよいという違いではなく、今の自己認識の目安です。</p>

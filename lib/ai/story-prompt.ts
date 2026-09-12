@@ -1,8 +1,8 @@
 import type { LifeStoryBundle } from '@/lib/life-story';
 import { initialQuestionSet } from '@/lib/initial-question-set';
-import { personalityQuestions, ratingValue, RATING_LABELS, summarizePersonality, UNSURE_ANSWER, UNSURE_LABEL } from '@/lib/personality';
+import { personalityQuestions, ratingValue, normalizeComparison, questionRatingLabels, summarizePersonality, UNSURE_ANSWER, UNSURE_LABEL } from '@/lib/personality';
 
-export const STORY_PROMPT_VERSION = 'japanese-life-story-v3-gentle-interview';
+export const STORY_PROMPT_VERSION = 'japanese-life-story-v4-scenario-reflection';
 export const STORY_MODEL = '@cf/openai/gpt-oss-120b';
 
 const TOPIC_LABELS: Record<string, string> = {
@@ -12,13 +12,17 @@ const TOPIC_LABELS: Record<string, string> = {
 
 export function buildStorySource(bundle: LifeStoryBundle) {
   const set = bundle.questionSet ?? initialQuestionSet;
-  const questionMap = new Map(personalityQuestions(set).map((question) => [question.id, question]));
-  const personalityAnswers = Object.entries(bundle.diagnosis?.answers ?? {}).filter(([id, answer]) => questionMap.has(id) && (Array.isArray(answer) ? answer.length : answer.trim())).map(([questionId, answer]) => {
-    const question = questionMap.get(questionId);
-    const score = question?.answerType === 'rating' ? ratingValue(answer) : null;
-    return { questionId, ...(question ? { question: question.text } : {}), answer,
-      ...(question?.answerType === 'rating' ? { responseMeaning: answer === UNSURE_ANSWER ? `${UNSURE_LABEL}。性格として解釈しない。` : score === null ? '無効な評価。解釈しない。' : RATING_LABELS[score - 1], scale: '1=まったく思わない、4=どちらともいえない、7=かなり思う' } : {}),
-    };
+  const personalityAnswers = personalityQuestions(set).flatMap((question) => {
+    const answer = bundle.diagnosis?.answers[question.id] ?? '';
+    const reasoning = bundle.diagnosis?.answerNotes?.[question.id]?.trim() ?? '';
+    if (!(Array.isArray(answer) ? answer.length : answer.trim()) && !reasoning) return [];
+    const score = question.answerType === 'rating' ? ratingValue(answer) : null;
+    const comparison = normalizeComparison(question.comparison);
+    return [{ questionId: question.id, question: question.text, answer, reasoning,
+      ...(question.answerType === 'rating' ? { comparison,
+        responseMeaning: answer === UNSURE_ANSWER ? `${UNSURE_LABEL}。選択回答から性格を解釈しない。` : answer === '' ? '選択回答なし（自由記述のみ）' : score === null ? '無効な評価。解釈しない。' : questionRatingLabels(question)[score - 1],
+        scale: comparison ? '1=Aにとても近い、4=どちらも同じくらい、7=Bにとても近い' : '1=まったく思わない、4=どちらともいえない、7=かなり思う' } : {}),
+    }];
   });
 
   return {
@@ -51,6 +55,7 @@ export function buildStorySource(bundle: LifeStoryBundle) {
       .sort((a, b) => a.age - b.age) ?? [],
     undatedNotes: bundle.timeline?.undatedNotes ?? '',
     personalityAnswers,
+    selfDescription: bundle.diagnosis?.selfDescription ?? '',
     personalityProfile: summarizePersonality(set, bundle.diagnosis?.answers ?? {}),
   };
 }
@@ -67,7 +72,8 @@ export function buildStoryInstructions(additionalInstruction = '') {
 - 別々の回答やエピソードの間に、資料で明記されていない因果関係や時間的なつながりを作らない。
 - 「今でも続いている」「土台になった」「学んだ」「自信が芽生えた」「今後も〜だろう」などは、本人の回答に同じ内容がある場合だけ使う。
 - 性格や価値観は診断名として断定せず、本人の回答や行動が伝わる描写として反映する。
-- 7段階の回答は質問文への同意の度合い。1〜3は不同意、4は中立、5〜7は同意。低得点や中立の質問文を、本人の性格として肯定して書かない。
+- 7段階は各設問のscaleとresponseMeaningに従う。comparisonがある設問はA/Bの比較で、1はA、7はBに近い。質問やA/Bの例文そのものは本人の経験ではない。旧形式の同意尺度と混同しない。
+- reasoningとselfDescriptionは本人の自由記述。選択回答だけで断定せず、場面による違いや本人の説明を尊重する。数値と文章が異なる場合も勝手に矛盾を解消しない。自由記述のみの回答を無視せず、文章を数値化しない。
 - personalityProfileは独自の自己理解シートの集計。正式なMBTIのタイプや確定した人格ではない。未完了の軸は解釈しない。数値を能力や確率として扱わず、今の傾向を過去の全時期に当てはめない。
 - 「判断できない・経験がない」（unsure）や空欄から性格を推測しない。中央付近は偏りが明確でないだけで、両方の特性を持つとは断定しない。
 - 記憶が曖昧な年月や会話を正確な日付・直接引用に変えない。成長・教訓・支えてくれた人・出来事の影響を、書かれていないのに補わない。普段の日常も大切な記録として扱う。

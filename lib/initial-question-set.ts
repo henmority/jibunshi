@@ -28,6 +28,7 @@ export type Question = {
   aiOriginalText?: string;
   reviewMemo?: string;
   preference?: Preference;
+  comparison?: { left: string; right: string };
 };
 
 export type Section = {

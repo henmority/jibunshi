@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { FlowHeader } from '@/app/components/flow-header';
 import { initialQuestionSet } from '@/lib/initial-question-set';
-import { personalityAnswerCount, upgradePersonalityQuestions } from '@/lib/personality';
+import { personalityAnswerCount, personalityNoteCount, upgradePersonalityQuestions } from '@/lib/personality';
 import {
   DIAGNOSIS_STORAGE_KEY,
   PUBLISHED_QUESTION_SET_KEY,
@@ -22,6 +22,7 @@ type ProgressState = {
   timelineCount: number;
   episodeCount: number;
   diagnosisCount: number;
+  diagnosisNotes: number;
   storyReady: boolean;
 };
 
@@ -30,6 +31,7 @@ const EMPTY_PROGRESS: ProgressState = {
   timelineCount: 0,
   episodeCount: 0,
   diagnosisCount: 0,
+  diagnosisNotes: 0,
   storyReady: false,
 };
 
@@ -44,7 +46,7 @@ const STEPS = [
   },
   {
     number: '3', eyebrow: 'PERSONALITY', title: '性格・考え方を入力',
-    description: '20問・7段階の回答から、普段の考え方や行動の傾向を振り返ります。', href: '/diagnosis',
+    description: '20の場面を7段階で比べ、自分の考えや理由も自由に書き残します。', href: '/diagnosis',
   },
   {
     number: '4', eyebrow: 'AI DRAFT', title: 'AIで人生史の原稿を作成',
@@ -64,11 +66,13 @@ export default function UserHomePage() {
       const timeline = normalizeTimelineData(readStoredJson(TIMELINE_STORAGE_KEY));
       const diagnosis = normalizeDiagnosisData(readStoredJson(DIAGNOSIS_STORAGE_KEY));
       const story = normalizeStoryDraft(readStoredJson(STORY_STORAGE_KEY));
+      const questionSet = upgradePersonalityQuestions(normalizeQuestionSet(readStoredJson(PUBLISHED_QUESTION_SET_KEY)) ?? initialQuestionSet);
       setProgress({
         profileReady: Boolean(timeline?.subjectName.trim() && timeline.birthDate),
         timelineCount: timeline ? Object.values(timeline.eventsByAge).filter((value) => value.trim()).length : 0,
         episodeCount: timeline?.episodes.length ?? 0,
-        diagnosisCount: diagnosis ? personalityAnswerCount(upgradePersonalityQuestions(normalizeQuestionSet(readStoredJson(PUBLISHED_QUESTION_SET_KEY)) ?? initialQuestionSet), diagnosis.answers) : 0,
+        diagnosisCount: diagnosis ? personalityAnswerCount(questionSet, diagnosis.answers) : 0,
+        diagnosisNotes: personalityNoteCount(questionSet, diagnosis),
         storyReady: Boolean(story?.content.trim()),
       });
     } catch {
@@ -88,7 +92,7 @@ export default function UserHomePage() {
   function statusFor(index: number) {
     if (index === 0) return progress.profileReady || progress.timelineCount ? `${progress.timelineCount}件入力` : '未入力';
     if (index === 1) return progress.episodeCount ? `${progress.episodeCount}件入力` : '未入力';
-    if (index === 2) return progress.diagnosisCount ? `${progress.diagnosisCount}問回答` : '未入力';
+    if (index === 2) return progress.diagnosisCount || progress.diagnosisNotes ? `${progress.diagnosisCount}問回答・自由記述${progress.diagnosisNotes}件` : '未入力';
     if (index === 3) return progress.storyReady ? '原稿あり' : '未作成';
     return progress.storyReady ? '印刷できます' : '原稿作成後';
   }
@@ -104,8 +108,8 @@ export default function UserHomePage() {
         </div>
         <div className="flow-progress-card">
           <span>現在の進み具合</span>
-          <strong>{[progress.timelineCount > 0, progress.episodeCount > 0, progress.diagnosisCount > 0, progress.storyReady].filter(Boolean).length}<small> / 4 段階</small></strong>
-          <div><i style={{ width: `${[progress.timelineCount > 0, progress.episodeCount > 0, progress.diagnosisCount > 0, progress.storyReady].filter(Boolean).length * 25}%` }} /></div>
+          <strong>{[progress.timelineCount > 0, progress.episodeCount > 0, progress.diagnosisCount > 0 || progress.diagnosisNotes > 0, progress.storyReady].filter(Boolean).length}<small> / 4 段階</small></strong>
+          <div><i style={{ width: `${[progress.timelineCount > 0, progress.episodeCount > 0, progress.diagnosisCount > 0 || progress.diagnosisNotes > 0, progress.storyReady].filter(Boolean).length * 25}%` }} /></div>
           <p>{progress.profileReady ? '基本情報は入力済みです。続きから始められます。' : 'まずは名前と生年月日から始めましょう。'}</p>
         </div>
       </section>
