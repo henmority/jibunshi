@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable @next/next/no-html-link-for-pages -- Vinext production navigation crashes when next/link initializes RSC prefetch. */
-
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { TIMELINE_STORAGE_KEY, PUBLISHED_QUESTION_SET_KEY, normalizeQuestionSet, readStoredJson } from '@/lib/life-story';
@@ -9,6 +7,7 @@ import { initialQuestionSet, type QuestionSet } from '@/lib/initial-question-set
 import { upgradePersonalityQuestions } from '@/lib/personality';
 import { EPISODE_TOPICS, episodeGuideQuestion } from '@/lib/episode-guide';
 import { EpisodeInterview } from '@/app/components/episode-interview';
+import { FlowHeader } from '@/app/components/flow-header';
 
 type SchoolType = 'kindergarten' | 'nursery' | 'elementary' | 'juniorHigh' | 'highSchool' | 'university' | 'graduate' | 'other';
 
@@ -600,23 +599,10 @@ export default function TimelinePage() {
 
   return (
     <main className="timeline-shell">
-      <header className="timeline-topbar">
-        <a className="timeline-brand" href="/" aria-label="自分史づくりの進行画面へ戻る">
-          <span aria-hidden="true">史</span>
-          <div><small>JIBUNSHI STUDIO</small><strong>人生年表</strong></div>
-        </a>
-        <nav className="studio-nav" aria-label="自分史づくりの手順">
-          <a href="/">進み具合</a>
-          <span className="active">人生年表</span>
-          <a href="/diagnosis">性格・考え方</a>
-          <a href="/story">AI原稿</a>
-          <a href="/book">印刷</a>
-        </nav>
-        <div className="timeline-header-actions">
+      <FlowHeader active="timeline" actions={<>
           <span className={`save-state ${saveState}`}><i />{saveState === 'saved' ? '保存済み' : saveState === 'saving' ? '保存中…' : '保存失敗'}</span>
           <button className="button secondary" onClick={() => downloadTimeline(timeline)}>JSONで保存</button>
-        </div>
-      </header>
+      </>} />
 
       <section className="timeline-hero age-timeline-hero">
         <div>
