@@ -1,0 +1,98 @@
+/* The original warm canvas, navy controls and step cards, with readable type
+   and consistent spacing. Screen-only so printed pages keep their layout. */
+@media screen {
+  :root { --ink: #29353b; --muted: #687278; --canvas: #f5f4ef; --paper: #fffefa; --line: #dedfd9; --blue: #34566b; --blue-hover: #294659; --blue-soft: #eaf0f3; }
+  body { -webkit-font-smoothing: antialiased; }
+  a:focus-visible, summary:focus-visible { outline: 3px solid #567a90; outline-offset: 4px; }
+  .flow-shell, .timeline-shell { background: var(--canvas); }
+  .flow-header { gap: 20px; padding-inline: 28px; border-color: var(--line); }
+  .flow-brand strong { font-size: 16px; }
+  .flow-brand small { font-size: 9px; font-weight: 500; }
+  .flow-brand > span { width: 38px; height: 38px; box-shadow: inset 0 0 0 1px #ffffff25; }
+  .flow-nav a { min-width: 106px; padding: 7px 12px; }
+  .flow-nav small { font-size: 9px; }
+  .flow-nav span { font-size: 12px; font-weight: 600; }
+  .flow-home-link { font-size: 12px; font-weight: 500; }
+  .flow-header-actions { display: flex; align-items: center; justify-content: end; gap: 12px; }
+  :is(.flow-shell, .timeline-shell, .book-shell) .button { min-height: 42px; border-radius: 8px; padding: 10px 17px; font-size: 13px; font-weight: 600; }
+  .flow-header-actions .button { min-height: 36px; padding: 7px 12px; font-size: 11px; }
+  .flow-hero { min-height: 390px; grid-template-columns: minmax(0, 1fr) 300px; gap: 65px; padding-block: 48px; background: linear-gradient(115deg, #f8f6ef, #edf2f3); border-color: var(--line); }
+  .flow-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: #627684; }
+  .flow-hero h1 { font-size: clamp(34px, 3.7vw, 48px); line-height: 1.55; letter-spacing: .035em; margin: 15px 0 16px; }
+  .home-lead { max-width: 570px; font-size: 14px; color: #606d74; line-height: 1.9; margin: 0 0 24px; }
+  .flow-hero .home-start { min-height: 46px; display: inline-flex; gap: 30px; text-decoration: none; }
+  .flow-hero > div:first-child > .home-entry-note { margin: 12px 0 0; color: #687278; font-size: 11px; line-height: 1.7; }
+  .flow-progress-card { padding: 26px; border-radius: 12px; background: #ffffffd9; border-color: #d9e0e1; box-shadow: 0 5px 20px #324f6508; }
+  .flow-progress-card > span { font-size: 12px; }
+  .flow-progress-card > strong { font-family: inherit; font-size: 42px; color: var(--blue); font-weight: 500; font-variant-numeric: tabular-nums; margin-block: 14px 20px; }
+  .flow-progress-card > strong small { color: #687278; font-size: 12px; }
+  .flow-progress-card p { font-size: 12px; line-height: 1.8; }
+  .home-progress-link { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #e2e6e6; margin-top: 20px; padding-top: 16px; color: var(--blue); font-size: 12px; text-decoration: none; }
+  .home-progress-link:hover { text-decoration: underline; }
+  .flow-steps { width: min(1080px, calc(100% - 64px)); padding-block: 40px 55px; }
+  .flow-section-heading { margin-bottom: 22px; }
+  .flow-section-heading h2 { font-size: 26px; font-weight: 600; scroll-margin-top: 155px; }
+  .flow-section-heading > p { font-size: 12px; }
+  .flow-step-list { list-style: none; padding: 0; margin: 0; gap: 12px; }
+  .flow-step-card { min-height: 108px; padding: 22px 26px; border-color: #dfe2dd; border-radius: 12px; box-shadow: 0 2px 5px #233c4d03; transition: border-color .16s, background-color .16s; }
+  .flow-step-card:hover { transform: none; background: #fff; border-color: #98afbd; box-shadow: 0 3px 12px #233c4d07; }
+  .flow-step-number { font-family: inherit; font-size: 19px; font-weight: 500; width: 46px; height: 46px; }
+  .flow-step-card h3 { font-family: inherit; font-size: 17px; font-weight: 600; margin: 0 0 8px; }
+  .flow-step-card p { font-size: 12px; line-height: 1.85; color: #687278; }
+  .flow-step-status { font-size: 11px; font-weight: 500; color: #6c746e; }
+  .flow-footer { background: #eeeee8; border-color: var(--line); }
+  .flow-footer p { max-width: 700px; font-size: 11px; line-height: 1.9; }.flow-footer a { font-size: 11px; flex-shrink: 0; }
+  /* Keep the existing form layout and topic colors; improve the reading scale. */
+  .subpage-hero { min-height: 300px; padding-block: 40px; gap: 45px; }
+  .subpage-hero h1 { font-size: clamp(30px, 3.2vw, 42px); }
+  .timeline-hero h1 { font-size: clamp(28px, 2.8vw, 36px); }
+  .timeline-hero > div > p:last-child { font-size: 13px; line-height: 1.9; }
+  .timeline-profile { grid-template-columns: minmax(0, 1fr) minmax(160px, .8fr); }
+  .timeline-profile label { font-size: 12px; }.timeline-profile input { font-size: 16px; height: 46px; border-radius: 8px; }
+  .timeline-summary span, .timeline-summary > p { font-size: 11px; }
+  .school-history-heading > div > p:last-child, .school-record-empty { font-size: 12px; }
+  .school-record label, .school-record > p { font-size: 11px; }.school-record input { font-size: 16px; }
+  .age-timeline-head { top: 78px; }.age-year-cell > span, .school-marker { font-size: 11px; }
+  .age-event-cell textarea { font-size: 15px; line-height: 1.9; }.choose-topic-button { min-height: 36px; font-size: 11px; }
+  .diagnosis-question-body h2 { font-family: inherit; font-size: 18px; font-weight: 600; line-height: 1.85; }
+  .diagnosis-intro p, .diagnosis-question-body > p, .diagnosis-progress > span { font-size: 12px; }
+  .preference-comparison p { font-size: 14px; }.preference-axis-label { font-size: 11px; }
+  .preference-reason summary { min-height: 44px; }.preference-reason textarea, .preference-free-writing textarea { font-size: 16px; }
+  .flow-next-card p, .story-generate-card > p:not(.flow-eyebrow):not(.story-missing) { font-size: 12px; }
+  .story-data-actions { grid-template-columns: 1fr; }.story-data-actions .button { width: 100%; font-size: 12px; }
+  .episode-topic-grid strong { font-size: 13px; }.episode-topic-grid small, .topic-picker-lead { font-size: 11px; }
+  @media (max-width: 1100px) {
+    .flow-header { grid-template-columns: auto 1fr auto; gap: 14px; padding-inline: 20px; }
+    .flow-nav { justify-content: center; }.flow-nav a { min-width: 90px; padding-inline: 8px; }.flow-nav span { font-size: 11px; }
+    .flow-home-link { display: block; font-size: 11px; }
+    .flow-hero { gap: 35px; padding-inline: 35px; }
+  }
+  @media (max-width: 760px) {
+    .flow-header { grid-template-columns: 1fr auto; min-height: 0; padding: 12px 18px 0; gap: 12px; }
+    .flow-brand { gap: 8px; }.flow-brand > span { width: 30px; height: 30px; font-size: 15px; }.flow-brand strong { font-size: 14px; }
+    .flow-home-link, .flow-header-actions { grid-column: 2; grid-row: 1; }
+    .flow-header-actions { gap: 7px; }.flow-header-actions .save-state { font-size: 9px; }.flow-header-actions .button { min-height: 32px; padding: 6px 8px; font-size: 10px; }
+    .flow-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-column: 1 / -1; grid-row: 2; }
+    .flow-nav a { min-width: 0; padding: 7px 2px 10px; gap: 4px; }.flow-nav span { font-size: 10px; white-space: nowrap; }.flow-nav small { font-size: 9px; }
+    .flow-hero { grid-template-columns: 1fr; padding: 32px 22px; gap: 26px; min-height: 0; }
+    .flow-hero h1 { font-size: clamp(30px, 8.7vw, 37px); margin-block: 12px 14px; }.home-lead { font-size: 13px; margin-bottom: 20px; }
+    .flow-progress-card { padding: 20px; }.flow-progress-card > strong { font-size: 32px; margin-block: 8px 12px; }.home-progress-link { margin-top: 14px; padding-top: 12px; }
+    .flow-steps { width: calc(100% - 32px); padding-block: 30px 40px; }.flow-section-heading { gap: 10px; }.flow-section-heading h2 { font-size: 23px; }
+    .flow-step-card { grid-template-columns: 35px minmax(0, 1fr) 14px; gap: 10px 12px; padding: 18px 14px; }.flow-step-number { width: 34px; height: 34px; font-size: 16px; align-self: start; }
+    .flow-step-card h3 { font-size: 16px; line-height: 1.6; }.flow-step-card p { font-size: 12px; }.flow-step-status { font-size: 10px; }
+    .flow-footer { padding: 22px; }.flow-footer a { font-size: 10px; }
+    .subpage-hero, .timeline-hero { grid-template-columns: 1fr; padding: 30px 20px; gap: 24px; min-height: 0; }.subpage-hero h1, .timeline-hero h1 { font-size: 28px; }
+    .timeline-profile { grid-template-columns: 1fr; gap: 16px; }.age-timeline-main { width: calc(100% - 28px); }
+    .age-timeline-head { top: 106px; }.age-timeline-heading { align-items: start; flex-direction: column; gap: 15px; }.age-event-cell textarea { font-size: 16px; }
+    .diagnosis-question { grid-template-columns: minmax(0, 1fr); }.diagnosis-question-number { flex-direction: row; justify-content: space-between; padding: 11px 17px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .diagnosis-question-body { padding: 22px 17px; }.diagnosis-question-body h2 { font-size: 17px; }
+    .preference-comparison { grid-template-columns: 1fr; gap: 10px; }.preference-scale-options { gap: 3px; }.preference-scale-options label { padding: 10px 2px; }.preference-scale-options .scale-dot { width: 27px; height: 27px; }
+    .preference-scale-options .scale-wording { display: none; }.preference-scale-endpoints { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 11px; }.preference-result-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 360px) {
+    .flow-header { padding-inline: 12px; gap: 10px; }.flow-brand > span { display: none; }.flow-brand strong { font-size: 13px; }.flow-nav span { font-size: 9px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flow-shell *, .timeline-shell * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+}
