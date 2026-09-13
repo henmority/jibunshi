@@ -161,7 +161,7 @@ export default function DiagnosisPage() {
     <main className="flow-shell subpage-shell">
       <FlowHeader active="diagnosis" />
       <section className="subpage-hero diagnosis-hero">
-        <div><p className="flow-eyebrow">STEP 3 — PERSONALITY & VALUES</p><h1>あなたなら、<br />どう考えますか。</h1><p>{questions.length}の場面から、自然に選ぶ考え方を振り返ります。7段階の選択と、自分の言葉の両方で残せます。</p></div>
+        <div><p className="flow-eyebrow">手順 3 ／ 自分の考え方を知る</p><h1>あなたなら、<br />どう考えますか。</h1><p>{questions.length}の場面から、自然に選ぶ考え方を振り返ります。7段階の選択と、自分の言葉の両方で残せます。</p></div>
         <div className="diagnosis-progress"><span>回答済み</span><strong>{answeredCount}<small> / {questions.length}問</small></strong><div><i style={{ width: `${questions.length ? (answeredCount / questions.length) * 100 : 0}%` }} /></div><p className={`save-state ${saveState}`}><i />{saveState === 'saved' ? '保存済み' : saveState === 'saving' ? '保存中…' : '保存失敗'}</p></div>
       </section>
 
@@ -188,14 +188,14 @@ export default function DiagnosisPage() {
           ))}
         </div>
         <section className="preference-free-writing" aria-labelledby="free-writing-title">
-          <p className="flow-eyebrow">IN YOUR OWN WORDS</p><h2 id="free-writing-title">選択肢では伝えきれない、あなたの考え</h2>
+          <p className="flow-eyebrow">自分の言葉で</p><h2 id="free-writing-title">選択肢では伝えきれない、あなたの考え</h2>
           <p id="self-description-help">人と意見が違うときに大切にすること、昔と今で変わった考え方、自分らしいと思う行動など。書きたいことだけで構いません。</p>
           <label htmlFor="self-description">自分の考え方・性格について自由に書いてください（任意）</label>
           <textarea id="self-description" aria-describedby="self-description-help" disabled={!hydrated} rows={6} maxLength={12000} value={diagnosis.selfDescription ?? ''} onChange={(e) => updateDiagnosis({ selfDescription: e.target.value })} />
           <p className="preference-note">文章は点数には換算しません。人生史を作るAIには、選択回答と一緒に本人の説明として渡します。</p>
         </section>
         <section className="preference-results" aria-labelledby="preference-results-title">
-          <p className="flow-eyebrow">YOUR PREFERENCES</p><h2 id="preference-results-title">回答から見える、4つの傾向</h2>
+          <p className="flow-eyebrow">回答の振り返り</p><h2 id="preference-results-title">回答から見える、4つの傾向</h2>
           <p>各観点の項目をすべて確認し、7段階で答えたものが3問以上あれば目安を表示します。「判断できない」は点数に含めません。どちらがよいという違いではなく、今の自己認識の目安です。</p>
           <div className="preference-result-grid">{profile.axes.map((axis) => <article key={axis.id}>
             <div className="preference-result-heading"><h3>{axis.title}</h3><small>回答 {axis.answered} / {axis.total}問{axis.skipped ? `・判断保留 ${axis.skipped}問` : ''}</small></div>

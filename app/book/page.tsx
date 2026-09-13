@@ -84,7 +84,7 @@ export default function BookPage() {
     <main className="flow-shell subpage-shell book-shell">
       <div className="no-print"><FlowHeader active="book" /></div>
       <section className="book-toolbar no-print">
-        <div><p className="flow-eyebrow">STEP 5 — PRINT & PDF</p><h1>A4印刷の仕上がりを確認</h1><p>文章を直す場合は「原稿を編集」へ戻ってください。印刷画面で「PDFに保存」を選ぶこともできます。</p></div>
+        <div><p className="flow-eyebrow">手順 5 ／ 印刷して、一冊にする</p><h1>A4印刷の仕上がりを確認</h1><p>文章を直す場合は「原稿を編集」へ戻ってください。印刷画面で「PDFに保存」を選ぶこともできます。</p></div>
         <div className="book-toolbar-actions">
           <div className="book-font-switch" aria-label="本文の文字サイズ"><span>文字サイズ</span><button className={fontSize === 'compact' ? 'active' : ''} onClick={() => setFontSize('compact')}>小</button><button className={fontSize === 'standard' ? 'active' : ''} onClick={() => setFontSize('standard')}>中</button><button className={fontSize === 'large' ? 'active' : ''} onClick={() => setFontSize('large')}>大</button></div>
           <a className="button secondary" href="/story">原稿を編集</a>

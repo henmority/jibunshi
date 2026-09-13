@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-// Screen-only visual treatment; the print stylesheet remains unchanged.
-import './edition.css';
+// Editorial screen design; the A4 print stylesheet remains unchanged.
+import './journal.css';
 
 const title = 'わたしの自分史｜人生を一冊の物語へ';
 const description = '人生年表、エピソード、性格・考え方を入力し、AIと一緒に印刷できる自分史を作るサービス。';

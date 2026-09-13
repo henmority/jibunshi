@@ -16,12 +16,12 @@ export function FlowHeader({ active, actions }: { active: FlowStep; actions?: Re
     <header className="flow-header">
       <a className="flow-brand" href="/" aria-label="自分史づくりの進行画面へ戻る">
         <span aria-hidden="true">史</span>
-        <div><small>JIBUNSHI STUDIO</small><strong>わたしの自分史</strong></div>
+        <div><small>人生の記録</small><strong>わたしの自分史</strong></div>
       </a>
       <nav className="flow-nav" aria-label="自分史づくりの手順">
         {FLOW_LINKS.map((step) => (
           <a className={active === step.id ? 'active' : ''} aria-current={active === step.id ? 'page' : undefined} href={step.href} key={step.id}>
-            <small>STEP {step.number}</small><span>{step.label}</span>
+            <small>{step.number}</small><span>{step.label}</span>
           </a>
         ))}
       </nav>

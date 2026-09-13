@@ -158,7 +158,7 @@ export default function StoryPage() {
     <main className="flow-shell subpage-shell">
       <FlowHeader active="story" />
       <section className="subpage-hero story-hero">
-        <div><p className="flow-eyebrow">STEP 4 — AI DRAFT</p><h1>入力した事実から、<br />人生史の下書きを作る。</h1><p>AIへ送信するのは、ここに表示される年表・エピソード・診断回答です。生成後の文章は自由に修正できます。</p></div>
+        <div><p className="flow-eyebrow">手順 4 ／ AIと原稿をまとめる</p><h1>入力した事実から、<br />人生史の下書きを作る。</h1><p>AIへ送信するのは、ここに表示される年表・エピソード・診断回答です。生成後の文章は自由に修正できます。</p></div>
         <div className="story-source-summary">
           <span>AIへ渡す資料</span>
           <div><strong>{eventCount}<small>件</small><em>年齢メモ</em></strong><strong>{episodeCount}<small>件</small><em>エピソード</em></strong><strong>{diagnosisCount}<small>問</small><em>診断回答</em></strong></div>
@@ -167,7 +167,7 @@ export default function StoryPage() {
 
       <section className="story-workspace">
         <aside className="story-data-panel">
-          <div><p className="flow-eyebrow">SOURCE DATA</p><h2>入力データを確認</h2><p>送信前に、含まれる内容を確認できます。</p></div>
+          <div><p className="flow-eyebrow">原稿の材料</p><h2>入力データを確認</h2><p>送信前に、含まれる内容を確認できます。</p></div>
           <div className="story-readiness-list">
             <a className={timeline?.subjectName && timeline.birthDate ? 'ready' : ''} href="/timeline"><span>{timeline?.subjectName && timeline.birthDate ? '✓' : '1'}</span><div><strong>基本情報</strong><small>{timeline?.subjectName || '名前が未入力'}</small></div><b>›</b></a>
             <a className={eventCount || episodeCount ? 'ready' : ''} href="/timeline"><span>{eventCount || episodeCount ? '✓' : '2'}</span><div><strong>年表・エピソード</strong><small>{eventCount + episodeCount}件の記録</small></div><b>›</b></a>
@@ -187,7 +187,7 @@ export default function StoryPage() {
 
           {story ? (
             <div className="story-editor">
-              <div className="story-editor-heading"><div><p className="flow-eyebrow">AI DRAFT</p><h2>人生史の下書き</h2></div><span>自由に修正できます</span></div>
+              <div className="story-editor-heading"><div><p className="flow-eyebrow">原稿を整える</p><h2>人生史の下書き</h2></div><span>自由に修正できます</span></div>
               <label><span>題名</span><input value={story.title} onChange={(event) => updateStory({ title: event.target.value })} /></label>
               <label><span>本文</span><textarea rows={28} value={story.content} onChange={(event) => updateStory({ content: event.target.value })} /></label>
               <label className="ai-consent story-regenerate-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span><strong>再生成のため、表示中のデータをAIへ送ることに同意します</strong><small>編集済みの原稿は、再生成すると新しい下書きに置き換わります。</small></span></label>
@@ -196,7 +196,7 @@ export default function StoryPage() {
           ) : (
             <div className="story-generate-card">
               <span className="story-generate-mark" aria-hidden="true">文</span>
-              <p className="flow-eyebrow">READY TO WRITE</p>
+              <p className="flow-eyebrow">原稿の作成</p>
               <h2>人生史の下書きを作成</h2>
               <p>AIは入力されていない事実を補わず、情報量に合わせて文章をまとめます。生成後は必ずご本人が内容を確認してください。</p>
               {!canGenerate ? <p className="story-missing">年表の出来事、または深掘りエピソードを1件以上入力してください。</p> : null}

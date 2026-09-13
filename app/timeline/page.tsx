@@ -606,7 +606,7 @@ export default function TimelinePage() {
 
       <section className="timeline-hero age-timeline-hero">
         <div>
-          <p className="label">LIFE TIMELINE</p>
+          <p className="label">手順 1・2 ／ 年表をつくる</p>
           <h1>年齢に沿って、人生を思い出す</h1>
           <p>生年月日から年齢ごとの期間を並べ、学校年度は4月から翌年3月として表示します。覚えているところから出来事を入力してください。</p>
         </div>
@@ -628,7 +628,7 @@ export default function TimelinePage() {
         <section className="school-history-card">
           <div className="school-history-heading">
             <div>
-              <p className="label">SCHOOL HISTORY</p>
+              <p className="label">通った学校のこと</p>
               <h2>学校歴</h2>
               <p>通った学校だけを選び、学校名と当時の年齢を入力します。</p>
             </div>
@@ -693,7 +693,7 @@ export default function TimelinePage() {
 
         <section className="age-timeline-card">
           <div className="age-timeline-heading">
-            <div><p className="label">CHRONOLOGY</p><h2>年齢ごとの出来事</h2></div>
+            <div><p className="label">歩みをたどる</p><h2>年齢ごとの出来事</h2></div>
             {currentAge !== null ? <button className="button secondary" onClick={scrollToCurrentAge}>現在の年齢へ移動</button> : null}
           </div>
 
@@ -726,7 +726,7 @@ export default function TimelinePage() {
 
         {timeline.undatedNotes ? (
           <section className="undated-notes-card">
-            <div><p className="label">UNPLACED NOTES</p><h2>時期が決まっていない以前のメモ</h2></div>
+            <div><p className="label">時期を問わず残す</p><h2>時期が決まっていない以前のメモ</h2></div>
             <textarea rows={6} value={timeline.undatedNotes} onChange={(event) => updateTimeline({ undatedNotes: event.target.value })} />
           </section>
         ) : null}
@@ -742,7 +742,7 @@ export default function TimelinePage() {
           <div className="topic-picker-modal">
             <div className="utility-heading">
               <div>
-                <p className="label">CHOOSE A TOPIC</p>
+                <p className="label">話題を選ぶ</p>
                 <h2 id="topic-picker-title">{topicPickerAge}歳の話題を選ぶ</h2>
               </div>
               <button className="modal-close" onClick={() => setTopicPickerAge(null)} aria-label="話題選択を閉じる">×</button>
@@ -771,7 +771,7 @@ export default function TimelinePage() {
           <div className="episode-editor-modal">
             <div className="episode-editor-header">
               <div>
-                <p className="label">DEEPEN THE STORY</p>
+                <p className="label">出来事を掘り下げる</p>
                 <h2 id="episode-editor-title">{selectedEpisode.age}歳のエピソード</h2>
                 <span>{formatAgePeriod(timeline.birthDate, selectedEpisode.age)}</span>
               </div>
