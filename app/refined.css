@@ -1,6 +1,15 @@
 /* The original warm canvas, navy controls and step cards, with readable type
    and consistent spacing. Screen-only so printed pages keep their layout. */
 @media screen {
+  .writing-settings { min-width: 0; margin: 20px 0; padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+  .writing-settings legend { padding-inline: 7px; font-size: 15px; font-weight: 700; }
+  .writing-settings > label { display: flex; flex-direction: column; gap: 7px; margin-top: 16px; font-size: 12px; font-weight: 600; }
+  .writing-settings input:not([type=file]), .writing-settings select { width: 100%; min-height: 42px; padding: 9px; background: white; border: 1px solid #c9cece; border-radius: 6px; font-size: 14px; }
+  .writing-settings p, .writing-settings small { color: var(--muted); font-size: 11px; line-height: 1.85; font-weight: 400; }
+  .writing-setting-actions { display: grid; gap: 8px; margin-top: 15px; }.writing-setting-actions .button { width: 100%; }
+  .writing-review { padding: 17px; margin: 18px 0; border: 1px solid #ddd1b5; border-radius: 9px; background: #faf6eb; font-size: 12px; line-height: 1.85; overflow-wrap: anywhere; }
+  .writing-review h2 { font-size: 14px; margin: 0 0 10px; }.writing-review ul { padding-left: 20px; margin-block: 10px; }.writing-review li + li { margin-top: 10px; }
+  .writing-review summary { cursor: pointer; font-weight: 600; }
   :root { --ink: #29353b; --muted: #687278; --canvas: #f5f4ef; --paper: #fffefa; --line: #dedfd9; --blue: #34566b; --blue-hover: #294659; --blue-soft: #eaf0f3; }
   body { -webkit-font-smoothing: antialiased; }
   a:focus-visible, summary:focus-visible { outline: 3px solid #567a90; outline-offset: 4px; }

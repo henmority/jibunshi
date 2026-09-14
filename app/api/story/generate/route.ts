@@ -4,6 +4,8 @@ import { createWorkersAI } from 'workers-ai-provider';
 
 import { buildStoryInstructions, buildStoryPrompt, STORY_MODEL, STORY_PROMPT_VERSION } from '@/lib/ai/story-prompt';
 import { normalizeLifeStoryBundle } from '@/lib/life-story';
+import { normalizeWritingSettings, STORY_MAX_OUTPUT_TOKENS } from '@/lib/ai/writing-settings';
+import { hasEpisodeContent, reviewStoryOutput, reviewStorySource } from '@/lib/ai/source-review';
 
 type AiBindings = {
   AI?: Ai;
@@ -22,12 +24,14 @@ export async function POST(request: Request) {
     return Response.json({ error: 'JSONデータを読み取れませんでした。' }, { status: 400 });
   }
 
-  const payload = body && typeof body === 'object' ? body as { bundle?: unknown; instruction?: unknown } : {};
+  if (JSON.stringify(body).length > 1_500_000) return Response.json({ error: 'JSONデータが大きすぎます。' }, { status: 413 });
+  const payload = body && typeof body === 'object' ? body as { bundle?: unknown; instruction?: unknown; writingSettings?: unknown } : {};
+  const writingSettings = normalizeWritingSettings(payload.writingSettings);
   const bundle = normalizeLifeStoryBundle(payload.bundle);
   if (!bundle?.timeline) {
     return Response.json({ error: '人生年表を含む自分史JSONが必要です。' }, { status: 400 });
   }
-  const hasSource = Object.values(bundle.timeline.eventsByAge).some((value) => value.trim()) || bundle.timeline.episodes.length > 0;
+  const hasSource = Object.values(bundle.timeline.eventsByAge).some((value) => value.trim()) || bundle.timeline.episodes.some(hasEpisodeContent);
   if (!hasSource) {
     return Response.json({ error: 'AI原稿を作る前に、年表の出来事か深掘りエピソードを入力してください。' }, { status: 400 });
   }
@@ -41,17 +45,20 @@ export async function POST(request: Request) {
     const workersai = createWorkersAI({ binding });
     const result = await generateText({
       model: workersai(STORY_MODEL),
-      instructions: buildStoryInstructions(typeof payload.instruction === 'string' ? payload.instruction : ''),
+      instructions: buildStoryInstructions(typeof payload.instruction === 'string' ? payload.instruction : '', writingSettings),
       prompt: buildStoryPrompt(bundle),
-      maxOutputTokens: 6000,
-      temperature: 0.25,
+      maxOutputTokens: STORY_MAX_OUTPUT_TOKENS,
+      temperature: writingSettings.temperature,
     });
 
+    if (!result.text.trim()) throw new Error('Empty generation');
     return Response.json({
       text: result.text,
       model: STORY_MODEL,
       promptVersion: STORY_PROMPT_VERSION,
       usage: result.usage,
+      writingSettings,
+      editorialWarnings: [...reviewStorySource(bundle).warnings, ...reviewStoryOutput(result.text, result.finishReason)],
     }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Story generation failed', error);

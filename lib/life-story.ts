@@ -1,5 +1,6 @@
 import type { QuestionSet } from '@/lib/initial-question-set';
 import { summarizePersonality } from './personality';
+import { normalizeWritingSettings, type WritingSettings } from './ai/writing-settings';
 
 export const TIMELINE_STORAGE_KEY = 'jibunshi-life-timeline-v3';
 export const DIAGNOSIS_STORAGE_KEY = 'jibunshi-personality-diagnosis-v1';
@@ -63,6 +64,8 @@ export type StoryDraft = {
   updatedAt: string;
   promptVersion: string;
   model: string;
+  writingSettings?: WritingSettings;
+  editorialWarnings?: string[];
 };
 
 export type LifeStoryBundle = {
@@ -192,6 +195,8 @@ export function normalizeStoryDraft(value: unknown): StoryDraft | null {
     updatedAt: stringValue(data.updatedAt),
     promptVersion: stringValue(data.promptVersion),
     model: stringValue(data.model),
+    ...(data.writingSettings ? { writingSettings: normalizeWritingSettings(data.writingSettings) } : {}),
+    ...(Array.isArray(data.editorialWarnings) ? { editorialWarnings: data.editorialWarnings.filter((item): item is string => typeof item === 'string').slice(0, 100) } : {}),
   };
 }
 

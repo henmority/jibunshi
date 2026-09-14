@@ -24,7 +24,7 @@ import {
   type TimelineData,
 } from '@/lib/life-story';
 
-type GenerateResponse = { text?: string; model?: string; promptVersion?: string; error?: string };
+type GenerateResponse = { text?: string; model?: string; promptVersion?: string; error?: string; writingSettings?: StoryDraft['writingSettings']; editorialWarnings?: string[] };
 
 function titleFromStory(text: string, fallback: string) {
   const heading = text.split('\n').find((line) => line.startsWith('# '));
@@ -139,6 +139,8 @@ export default function StoryPage() {
         updatedAt: now,
         promptVersion: result.promptVersion ?? '',
         model: result.model ?? '',
+        writingSettings: result.writingSettings,
+        editorialWarnings: result.editorialWarnings,
       };
       setStory(nextStory);
       localStorage.setItem(STORY_STORAGE_KEY, JSON.stringify(nextStory));
@@ -184,6 +186,7 @@ export default function StoryPage() {
         <div className="story-editor-panel">
           {notice ? <p className="inline-notice success">✓ {notice}</p> : null}
           {error ? <p className="inline-notice error" role="alert">! {error}</p> : null}
+          {story?.editorialWarnings?.length ? <section className="writing-review" aria-label="原稿の確認事項"><h2>原稿を読むときに確認してください</h2><ul>{story.editorialWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></section> : null}
 
           {story ? (
             <div className="story-editor">

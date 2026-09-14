@@ -6,6 +6,8 @@ import ts from 'typescript';
 // Run the shipped pure TS modules without requiring a browser or adding a test dependency.
 const episodeModule = moduleUrl('../lib/episode-guide.ts');
 const wordingModule = moduleUrl('../lib/question-wording.ts');
+const writingModule = moduleUrl('../lib/ai/writing-settings.ts');
+const reviewModule = moduleUrl('../lib/ai/source-review.ts');
 const personalityModule = moduleUrl('../lib/personality.ts', { './episode-guide': episodeModule, './question-wording': wordingModule });
 const { createPersonalitySection, summarizePersonality, upgradePersonalityQuestions, ratingValue, personalityAnswerCount, personalityNoteCount, questionRatingLabels, normalizeComparison } = await import(personalityModule);
 const section = createPersonalitySection();
@@ -66,10 +68,11 @@ function moduleUrl(path, dependencies = {}) {
 const loadModule = (path, dependencies) => import(moduleUrl(path, dependencies));
 
 test('JSON roundtrip preserves explanations, and AI receives the scenario, alternatives and correct comparison meaning', async () => {
-  const { createLifeStoryBundle, normalizeLifeStoryBundle } = await loadModule('../lib/life-story.ts', { './personality': personalityModule });
+  const { createLifeStoryBundle, normalizeLifeStoryBundle } = await loadModule('../lib/life-story.ts', { './personality': personalityModule, './ai/writing-settings': writingModule });
   const initialModule = `data:text/javascript;base64,${Buffer.from(`export const initialQuestionSet = ${JSON.stringify(set)};`).toString('base64')}`;
   const { buildStorySource } = await loadModule('../lib/ai/story-prompt.ts', {
     '@/lib/personality': personalityModule, '@/lib/initial-question-set': initialModule,
+    './writing-settings': writingModule, './source-review': reviewModule,
   });
   const bundle = createLifeStoryBundle({ timeline: null, story: null, questionSet: set,
     diagnosis: { schemaVersion: 1, questionSetId: set.questionSetId, questionSetVersion: set.version, answers: answersFor(() => '1'), answerNotes: { 'preference-v3-01': '仕事のあとには一人で過ごしたい。' }, selfDescription: '昔よりも自分の時間を大切にしています。', updatedAt: '' },
@@ -162,7 +165,7 @@ test('version 6 migration archives all previous personality items without reusin
 });
 
 test('free text normalizes safely and old exports remain readable', async () => {
-  const { normalizeDiagnosisData } = await loadModule('../lib/life-story.ts', { './personality': personalityModule });
+  const { normalizeDiagnosisData } = await loadModule('../lib/life-story.ts', { './personality': personalityModule, './ai/writing-settings': writingModule });
   const old = normalizeDiagnosisData({ schemaVersion: 1, answers: { old: '7' } });
   assert.deepEqual(old.answerNotes, {});
   assert.equal(old.selfDescription, '');
