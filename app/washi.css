@@ -1,0 +1,98 @@
+/* Contemporary Japanese warmth: paper, yamabuki, deep teal and vermilion.
+   UI text stays horizontal and input surfaces stay clear. Print is untouched. */
+@media screen {
+  :root {
+    --ink: #293b36; --muted: #687268; --canvas: #f6f2e7; --paper: #fffdf7;
+    --line: #dcd9c9; --blue: #285b57; --blue-hover: #1b4845; --blue-soft: #e8f0ea;
+    --green: #4d6951; --green-soft: #edf2e8; --yamabuki: #e5bb51; --vermillion: #ae543e;
+  }
+  ::selection { background: #f0d885; color: #233c35; }
+  .flow-shell, .timeline-shell, .book-shell { background: var(--canvas); }
+  .flow-header { background: #fffdf7f5; border-bottom: 1px solid #dcd9c9; }
+  .flow-brand > span { border-radius: 9px 11px 8px 10px; background: #ae543e; box-shadow: inset 0 0 0 3px #fffdf7, inset 0 0 0 4px #ae543e; font-size: 18px; }
+  .flow-brand strong { color: #28534d; letter-spacing: .07em; }
+  .flow-nav a { border-radius: 6px 6px 0 0; }.flow-nav a.active { background: #eaf0e8; border-color: #285b57; }.flow-nav a:hover { background: #f3f0df; }
+  .flow-nav small { color: #887337; }.flow-home-link { color: #627469; }
+  :is(.flow-shell, .timeline-shell, .book-shell) .button { border-radius: 8px; }
+  :is(.flow-shell, .timeline-shell, .book-shell) .button.primary { background: #285b57; border-color: #285b57; box-shadow: 0 3px 0 #173e38; }
+  :is(.flow-shell, .timeline-shell, .book-shell) .button.primary:hover { background: #1b4845; }
+  :is(.flow-shell, .timeline-shell, .book-shell) .button.secondary { background: #fffdf8; border-color: #cbcdbd; }
+  .flow-eyebrow, .timeline-shell .label { color: #677663; }
+  /* The illustration is decorative: all entry points and copy remain real HTML. */
+  .washi-home .washi-hero { position: relative; isolation: isolate; grid-template-columns: minmax(0, .9fr) minmax(0, 1.15fr); gap: 10px; min-height: 520px; padding: 42px max(32px, calc((100vw - 1180px) / 2)) 36px; background: #f7f1e1; border: 0; overflow: hidden; }
+  .washi-hero::before { content: ''; position: absolute; z-index: -1; width: 210px; height: 94px; left: -75px; top: 23px; border-radius: 56% 44% 60% 40%; background: #f3d98666; transform: rotate(-15deg); }
+  .washi-hero::after { content: ''; position: absolute; z-index: -1; width: 110px; height: 210px; right: -55px; bottom: -100px; border-radius: 50%; background: #dfe7cb; transform: rotate(35deg); }
+  .washi-hero-copy { position: relative; z-index: 1; padding-block: 16px; }
+  .washi-hero-copy > .flow-eyebrow { display: flex; align-items: center; gap: 12px; color: #58715e; font-size: 11px; letter-spacing: .09em; }
+  .washi-seal { display: grid; place-items: center; width: 28px; height: 31px; border: 1px solid #b8644b; border-radius: 5px 3px 4px 6px; color: #ae543e; font-family: 'Yu Mincho', serif; font-size: 16px; transform: rotate(-5deg); }
+  .washi-hero h1 { color: #243f36; font-size: clamp(34px, 3.65vw, 50px); font-weight: 650; line-height: 1.6; letter-spacing: .055em; margin: 19px 0 20px; }
+  .washi-hero .home-lead { color: #5f6b5e; font-size: 13px; line-height: 2.15; margin-bottom: 27px; }
+  .washi-hero .home-start { min-height: 49px; padding-inline: 23px; border-radius: 8px; gap: 32px; }
+  .washi-hero .home-start > span { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; background: #ffffff20; }
+  .washi-hero > div:first-child > .home-entry-note { margin-top: 15px; font-size: 10px; color: #6a7566; }
+  .washi-hero-art { position: relative; margin: 0 -30px 0 -15px; min-width: 0; }
+  .washi-hero-art img { display: block; width: 100%; height: auto; mix-blend-mode: multiply; mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent); mask-composite: intersect; }
+  .washi-hero-art figcaption { position: absolute; right: 12px; top: -4px; writing-mode: vertical-rl; color: #5c7765; font-family: 'Yu Mincho', 'Hiragino Mincho ProN', serif; font-size: 13px; font-weight: 600; letter-spacing: .14em; line-height: 1.85; }
+  .washi-progress-wrap { background: #f7f1e1; padding: 0 32px 32px; }
+  .washi-progress-wrap .flow-progress-card { width: min(1120px, 100%); margin: 0 auto; display: grid; grid-template-columns: auto auto minmax(100px, 1fr) auto; align-items: center; column-gap: 24px; row-gap: 10px; padding: 20px 26px; border: 1px solid #d7d7bf; border-radius: 12px; background: #fffdf6dd; box-shadow: none; }
+  .washi-progress-wrap .flow-progress-card > span { color: #596d5c; font-size: 12px; }
+  .washi-progress-wrap .flow-progress-card > strong { font-size: 29px; margin: 0; white-space: nowrap; }
+  .washi-progress-wrap .flow-progress-card > div { max-width: 240px; background: #e6e7d7; height: 6px; }
+  .washi-progress-wrap .flow-progress-card > p { grid-column: 1 / 4; grid-row: 2; margin: 0; font-size: 11px; }
+  .washi-progress-wrap .home-progress-link { grid-column: 4; grid-row: 1 / 3; margin: 0; padding: 10px 0; border: 0; align-items: center; gap: 20px; }
+  .washi-home .flow-steps { width: min(1080px, calc(100% - 64px)); padding: 42px 0 35px; }
+  .washi-home .flow-section-heading { margin-bottom: 25px; }.washi-home .flow-section-heading h2 { color: #304d3d; margin-top: 10px; font-size: 27px; letter-spacing: .03em; }
+  .washi-heading-dot { color: #b89035; }
+  .washi-home .flow-step-list { gap: 12px; }
+  .washi-home .flow-step-card { border-color: #dedac8; border-radius: 12px; background: #fffdf7; min-height: 108px; padding: 21px 25px; box-shadow: 0 3px 0 #e6e0cd66; }
+  .washi-home .flow-step-card:hover { border-color: #839f87; background: #fffefb; box-shadow: 0 3px 0 #cbd5c366; }
+  .washi-home .flow-step-number { width: 48px; height: 48px; font-family: 'Yu Mincho', serif; font-size: 23px; font-weight: 700; border-radius: 45% 54% 47% 53%; background: #f3df9f; color: #725e24; }
+  .washi-home .flow-step-list > li:nth-child(2) .flow-step-number { background: #e4eddb; color: #526c40; }
+  .washi-home .flow-step-list > li:nth-child(3) .flow-step-number { background: #f4e0d4; color: #965740; }
+  .washi-home .flow-step-list > li:nth-child(4) .flow-step-number { background: #dcece7; color: #37665c; }
+  .washi-home .flow-step-list > li:nth-child(5) .flow-step-number { background: #eae5ef; color: #6e5b7e; }
+  .washi-home .flow-step-card h3 { color: #354b3e; font-size: 17px; }.washi-home .flow-step-card p { color: #6a7467; }
+  .washi-home .flow-step-status { background: #f0efe4; color: #737765; }.washi-home .flow-step-status.started { background: #e7eee1; color: #4c6742; }
+  .washi-writing-note { width: min(1080px, calc(100% - 64px)); margin: 0 auto 48px; padding: 26px 30px; display: flex; align-items: center; gap: 24px; background: #eceede; border-radius: 12px; }
+  .washi-note-mark { writing-mode: vertical-rl; color: #9b683a; font-family: 'Yu Mincho', serif; font-size: 12px; letter-spacing: .15em; border-right: 2px solid #d5b361; padding-right: 13px; }
+  .washi-writing-note > div { flex: 1; }.washi-writing-note h2 { font-family: 'Yu Mincho', serif; font-size: 19px; color: #49623f; margin: 0 0 10px; }.washi-writing-note p { font-size: 12px; line-height: 1.9; color: #65725c; margin: 0; }
+  .washi-writing-note a { color: #365e47; font-size: 12px; text-decoration: none; border-bottom: 1px solid #93a67c; padding-bottom: 7px; white-space: nowrap; }
+  .flow-footer { background: #e9e6d8; border-top: 1px solid #d6d4c1; }.flow-footer p, .flow-footer a { color: #65735e; }
+  /* Carry the palette into writing surfaces without covering form fields. */
+  .subpage-hero, .timeline-hero { background: #f5efdd; border-color: #ddd8c3; }
+  .subpage-hero h1, .timeline-hero h1 { color: #304a3d; font-weight: 600; }
+  .diagnosis-hero { background: #f0f1e2; }.story-hero { background: #edf1e8; }
+  .diagnosis-progress, .story-source-summary { border-color: #d7d9c4; background: #fffdf6; box-shadow: 0 3px 0 #d9deca44; }
+  .timeline-summary { background: #fffdf6; border-color: #dedbc9; box-shadow: 0 3px 0 #e4dfca44; }
+  .timeline-profile input { border-color: #c7cebc; background: #fffef9; }
+  .school-history-card, .age-timeline-card, .undated-notes-card { border-color: #d8d9c3; background: #fffdf6; }
+  .school-picker, .school-record-empty, .school-record-list { background: #f3f1e4; }
+  .school-checkboxes label:has(input:checked) { background: #ebf1e4; border-color: #8eaa80; }
+  .age-timeline-head { background: #eceede; color: #5f7357; }.age-year-cell strong { color: #4c6750; }
+  .school-marker { background: #eef0df; color: #647347; }.age-event-cell textarea { background: #fffef9; }.choose-topic-button { color: #426e5d; border-color: #becab0; background: #f5f8ef; }
+  .diagnosis-question { border-color: #dcdcc9; background: #fffdf7; }.diagnosis-question-number { background: #f0f0e0; color: #6c754e; border-color: #dddfcd; }
+  .diagnosis-intro { background: #e7eedf; }.preference-comparison p { background: #eaf0e4; }.preference-comparison p:last-child { background: #f7ebd5; }
+  .preference-scale-options label.selected { border-color: #557e60; background: #e9f0e2; color: #345740; }.preference-scale-options label.selected .scale-dot { background: #426b50; border-color: #426b50; }
+  .preference-reason summary { color: #46664d; }.preference-free-writing, .preference-results { background: #f2f3e5; border-color: #d2d9bf; }
+  .flow-next-card { background: #eaf0e0; border-color: #c8d3b8; }.flow-next-card h2 { color: #456140; }
+  .story-data-panel, .story-editor-panel { border-color: #d4d8c4; }.story-readiness-list a { background: #f1f2e7; }.book-toolbar { background: #f7f3e8; }.book-preview { background: #e4e6d7; }
+  @media (max-width: 1100px) {
+    .washi-home .washi-hero { padding-inline: 32px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }.washi-hero-art { margin-right: -20px; }.washi-hero h1 { font-size: 37px; }
+    .washi-hero-art figcaption { right: 9px; top: -40px; font-size: 11px; }
+  }
+  @media (max-width: 760px) {
+    .washi-home .washi-hero { grid-template-columns: 1fr; min-height: 0; padding: 25px 23px 0; gap: 6px; }
+    .washi-hero-copy { padding-block: 8px 0; }.washi-hero-copy > .flow-eyebrow { font-size: 10px; gap: 10px; }.washi-seal { width: 25px; height: 28px; }
+    .washi-hero h1 { font-size: clamp(28px, 8.7vw, 38px); line-height: 1.65; margin-block: 14px 17px; letter-spacing: .035em; }
+    .washi-hero .home-lead { font-size: 12px; line-height: 2; margin-bottom: 22px; }.washi-hero .home-start { min-height: 46px; }
+    .washi-hero-art { margin: 10px -15px 0; }.washi-hero-art figcaption { display: none; }
+    .washi-progress-wrap { padding: 13px 17px 25px; }.washi-progress-wrap .flow-progress-card { padding: 19px; grid-template-columns: 1fr auto; gap: 12px; }
+    .washi-progress-wrap .flow-progress-card > span { font-size: 11px; }.washi-progress-wrap .flow-progress-card > strong { font-size: 25px; }.washi-progress-wrap .flow-progress-card > strong small { font-size: 10px; }
+    .washi-progress-wrap .flow-progress-card > div { grid-row: 2; grid-column: 1 / -1; max-width: none; }.washi-progress-wrap .flow-progress-card > p { grid-row: 3; grid-column: 1 / -1; }
+    .washi-progress-wrap .home-progress-link { grid-row: 4; grid-column: 1 / -1; border-top: 1px solid #e1e2cc; padding: 13px 0 0; margin-top: 2px; }
+    .washi-home .flow-steps { width: calc(100% - 32px); padding-top: 30px; }.washi-home .flow-section-heading h2 { font-size: 23px; }.washi-home .flow-section-heading > p { font-size: 11px; }
+    .washi-home .flow-step-card { padding: 19px 14px; grid-template-columns: 35px minmax(0, 1fr) 14px; gap: 10px 12px; }.washi-home .flow-step-number { width: 34px; height: 36px; font-size: 18px; }.washi-home .flow-step-card h3 { font-size: 16px; }
+    .washi-writing-note { width: calc(100% - 32px); padding: 22px 19px; margin-bottom: 30px; flex-wrap: wrap; gap: 17px; }.washi-writing-note > div { flex-basis: calc(100% - 55px); }.washi-writing-note h2 { font-size: 17px; line-height: 1.75; }.washi-writing-note p { font-size: 11px; }.washi-writing-note a { margin-left: 40px; }
+    .flow-brand > span { font-size: 15px; }.subpage-hero h1, .timeline-hero h1 { text-wrap: balance; }
+  }
+}

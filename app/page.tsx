@@ -100,18 +100,25 @@ export default function UserHomePage() {
   const startedStages = [progress.profileReady || progress.timelineCount > 0, progress.episodeCount > 0, progress.diagnosisCount > 0 || progress.diagnosisNotes > 0, progress.storyReady].filter(Boolean).length;
 
   return (
-    <main className="flow-shell refined-home">
+    <main className="flow-shell refined-home washi-home">
       <FlowHeader active="home" />
-      <section className="flow-hero">
-        <div>
-          <p className="flow-eyebrow">あなたの歩みを、あなたの言葉で。</p>
+      <section className="flow-hero washi-hero">
+        <div className="washi-hero-copy">
+          <p className="flow-eyebrow"><span className="washi-seal" aria-hidden="true">綴</span>あなたの歩みを、あなたの言葉で。</p>
           <h1>思い出をたどり、<br />一冊の人生史へ。</h1>
-          <p className="home-lead">覚えているところから、少しずつ。<br />年表やエピソードを残しながら、あなたの人生を一冊にまとめていきます。</p>
+          <p className="home-lead">うまく書こうとしなくて、大丈夫。<br />懐かしい場所、大切な人、いつもの日々。<br />思い出をひとつずつ、あなたの言葉で残しませんか。</p>
           <a className="button primary home-start" href="/timeline">{progress.profileReady || progress.timelineCount ? '年表の続きを書く' : '年表づくりを始める'}<span aria-hidden="true">→</span></a>
           <p className="home-entry-note">パスワード不要・このブラウザに自動保存</p>
         </div>
+        <figure className="washi-hero-art">
+          {/* eslint-disable-next-line @next/next/no-img-element -- next/image triggers an invalid-hook-call in the current Vinext runtime. Serve this static asset directly. */}
+          <img src="/life-memories-washi.png" width={1536} height={1024} alt="" fetchPriority="high" decoding="async" />
+          <figcaption>出会いも、寄り道も。<br />あなたの大切な一頁。</figcaption>
+        </figure>
+      </section>
+      <section className="washi-progress-wrap" aria-label="保存した記録">
         <div className="flow-progress-card" role="region" aria-label="現在の進み具合">
-          <span>現在の進み具合</span>
+          <span>あなたの自分史づくり</span>
           <strong>{startedStages}<small> / 4 段階に着手</small></strong>
           <div><i style={{ width: `${startedStages * 25}%` }} /></div>
           <p>{progress.profileReady ? '基本情報は入力済みです。続きから始められます。' : 'まずは名前と生年月日から始めましょう。'}</p>
@@ -121,7 +128,7 @@ export default function UserHomePage() {
 
       <section className="flow-steps" aria-labelledby="flow-steps-title">
         <div className="flow-section-heading">
-          <div><p className="flow-eyebrow">5つの手順</p><h2 id="flow-steps-title">自分史ができるまで</h2></div>
+          <div><p className="flow-eyebrow">少しずつ、かたちに。</p><h2 id="flow-steps-title">自分史ができるまで<span className="washi-heading-dot" aria-hidden="true">。</span></h2></div>
           <p>順番どおりでなくても大丈夫。<br />思い出したところから進めてください。</p>
         </div>
         <ol className="flow-step-list">
@@ -138,6 +145,12 @@ export default function UserHomePage() {
             );
           })}
         </ol>
+      </section>
+
+      <section className="washi-writing-note" aria-labelledby="writing-note-title">
+        <span className="washi-note-mark" aria-hidden="true">ひとこと</span>
+        <div><h2 id="writing-note-title">小さな思い出から、はじめましょう。</h2><p>「よく歩いた帰り道」「家族の口ぐせ」「夢中になったこと」。<br />短いメモでも構いません。書きたくないことは、空欄のままで大丈夫です。</p></div>
+        <a href="/timeline">年表を開く <span aria-hidden="true">→</span></a>
       </section>
 
       <footer className="flow-footer">
